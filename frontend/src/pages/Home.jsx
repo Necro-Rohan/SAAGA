@@ -1,6 +1,9 @@
 import Navbar from '../components/layout/Navbar';
 import Hero from '../components/home/Hero';
 import Services from '../components/home/Services';
+import Ambience from '../components/home/Ambience';
+import Feedback from '../components/home/Feedback';
+import Footer from '../components/layout/Footer';
 
 const Home = () => {
     return (
@@ -11,6 +14,9 @@ const Home = () => {
                 <Hero />
             </div>
             <Services />
+            <Ambience />
+            <Feedback />
+            <Footer />
         </div>
     );
 };

@@ -2,7 +2,7 @@ import ladyImage from '../../assets/lady.png';
 
 const Hero = () => {
     return (
-        <header className="flex flex-col md:flex-row justify-between flex-1 w-full">
+        <header className="flex flex-col md:flex-row justify-between flex-1 w-full overflow-hidden md:overflow-visible">
             <div className="flex-1 flex flex-col justify-center text-center items-center pt-10 md:pt-0">
                 <h1 className="font-serif text-6xl md:text-[5rem] lg:text-[7rem] font-semibold text-brown-700 leading-none tracking-[-2px] mb-2 px-4">
                     SAAGAA
