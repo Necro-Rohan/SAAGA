@@ -70,16 +70,16 @@ const ServicesFull = () => {
     };
 
     return (
-        <div className="min-h-screen bg-cream text-brown-900 font-sans">
+        <div className="min-h-screen bg-cream text-brown-900 font-sans selection:bg-brown-900 selection:text-white">
             <div className="bg-cream">
-                <Navbar />
+                <Navbar showLogo={true} />
             </div>
 
             <div className="pt-10 pb-16 text-center px-4">
-                <span className="text-xs font-semibold tracking-[0.3em] text-brown-400 uppercase mb-4 block animate-fade-in">
+                <span className="text-xs font-semibold tracking-[0.3em] text-brown-400 uppercase mb-4 block animate-fade-in font-sans">
                     Experience the art of refined beauty
                 </span>
-                <h1 className="font-serif text-4xl md:text-6xl text-brown-900 mb-6 tracking-tight">
+                <h1 className="font-serif text-4xl md:text-6xl text-brown-900 mb-6 tracking-tight font-medium">
                     Services We Offer
                 </h1>
                 <div className="w-16 h-px bg-brown-900/30 mx-auto"></div>
