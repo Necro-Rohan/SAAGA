@@ -1,12 +1,16 @@
 import waxImage from '../../assets/wax_service.png';
 import facialImage from '../../assets/facial_service.png';
 import { ArrowUpRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 /* 
   Expanding Flex Card
 */
 const ServiceCard = ({ service, className }) => (
-    <div className={`relative flex-1 hover:flex-[2] transition-[flex-grow] duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group overflow-hidden rounded-[2rem] cursor-pointer shadow-lg hover:shadow-2xl mx-2 first:ml-0 last:mr-0 min-w-0 ${className}`}>
+    <Link 
+        to="/services" 
+        className={`relative flex-1 hover:flex-[2] transition-[flex-grow] duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group overflow-hidden rounded-[2rem] cursor-pointer shadow-lg hover:shadow-2xl mx-2 first:ml-0 last:mr-0 min-w-0 ${className}`}
+    >
 
         {/* Image */}
         <img
@@ -49,11 +53,11 @@ const ServiceCard = ({ service, className }) => (
                 </div>
             </div>
         </div>
-    </div>
+    </Link>
 );
 
 const MobileServiceCard = ({ service }) => (
-    <div className="relative group overflow-hidden rounded-[2rem] cursor-pointer flex-shrink-0 w-[85vw] snap-center h-[450px] shadow-xl">
+    <Link to="/services" className="relative group overflow-hidden rounded-[2rem] cursor-pointer flex-shrink-0 w-[85vw] snap-center h-[450px] shadow-xl">
         <img
             src={service.image}
             alt={service.name}
@@ -77,7 +81,7 @@ const MobileServiceCard = ({ service }) => (
                 </p>
             </div>
         </div>
-    </div>
+    </Link>
 );
 
 const Services = () => {
