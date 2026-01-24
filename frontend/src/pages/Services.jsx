@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { servicesData } from '../constants/servicesData';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Check, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
+import BookingModal from '../components/booking/BookingModal';
 import waxImage from '../assets/wax_service.png';
 import facialImage from '../assets/facial_service.png';
 
 const ServicesFull = () => {
     const [activeCategory, setActiveCategory] = useState(servicesData[0].id);
+    const [selectedServices, setSelectedServices] = useState([]);
+    const [isBookingOpen, setIsBookingOpen] = useState(false);
 
     // Map categories to images (cycling through available ones if needed)
     const categoryImages = {
@@ -15,23 +18,22 @@ const ServicesFull = () => {
         "hair-his": "/Hairs.jpg",
         "hair-her": "/Hairs.jpg",
         "styling-her": "/Hairs.jpg",
-        "shampoo": "/Hairs.jpg", // Placeholder
-        "head-massage": "/Hairs.jpg", // Placeholder
-        "texture": "/Hairs.jpg", // Placeholder
-        "hair-treatments": "/Hairs.jpg", // Placeholder
-        "hair-spa": "/Hairs.jpg", // Placeholder
-        "hair-color": "/Hairs.jpg", // Placeholder
+        "shampoo": "/Hairs.jpg", 
+        "head-massage": "/Hairs.jpg", 
+        "texture": "/Hairs.jpg", 
+        "hair-treatments": "/Hairs.jpg", 
+        "hair-spa": "/Hairs.jpg", 
+        "hair-color": "/Hairs.jpg", 
         "skin": facialImage,
         "wax": waxImage,
-        "threading": facialImage, // Placeholder
-        "bleach": facialImage, // Placeholder
-        "body": waxImage, // Placeholder
+        "threading": facialImage, 
+        "bleach": facialImage, 
+        "body": waxImage, 
         "hands-feet": "/Nails.jpg",
         "lashes": "/Eyelashes.png",
         "his-packages": "/Hairs.jpg",
         "her-packages": "/Hairs.jpg"
     };
-
 
     const scrollToCategory = (id) => {
         setActiveCategory(id);
@@ -62,17 +64,55 @@ const ServicesFull = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const handleBook = (serviceName) => {
-        const phoneNumber = "919112157691";
-        const message = `Hi, I would like to book an appointment for ${serviceName}`;
-        const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-        window.open(url, '_blank');
+    // Toggle Service Selection
+    const toggleService = (item) => {
+        if (selectedServices.some(s => s.name === item.name)) {
+            setSelectedServices(selectedServices.filter(s => s.name !== item.name));
+        } else {
+            setSelectedServices([...selectedServices, item]);
+        }
     };
 
+    const isSelected = (itemName) => selectedServices.some(s => s.name === itemName);
+
     return (
-        <div className="min-h-screen bg-cream text-brown-900 font-sans selection:bg-brown-900 selection:text-white">
+        <div className="min-h-screen bg-cream text-brown-900 font-sans selection:bg-brown-900 selection:text-white pb-32">
             <div className="bg-cream">
                 <Navbar showLogo={true} />
+            </div>
+
+            <BookingModal 
+                isOpen={isBookingOpen} 
+                onClose={() => setIsBookingOpen(false)}
+                selectedServices={selectedServices}
+            />
+
+            {/* Floating Action Bar */}
+            <div className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-brown-900/10 p-4 md:p-6 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.1)] transition-transform duration-500 ease-in-out ${selectedServices.length > 0 ? 'translate-y-0' : 'translate-y-full'}`}>
+                <div className="max-w-[1440px] mx-auto flex justify-between items-center gap-4">
+                    <div className="hidden md:block">
+                        <span className="text-sm font-bold text-brown-900 uppercase tracking-widest block mb-1">Your Selection</span>
+                        <div className="flex gap-2 overflow-x-auto pb-1 max-w-xl">
+                            {selectedServices.map((s, i) => (
+                                <span key={i} className="text-sm text-brown-600 bg-brown-50 px-2 py-1 rounded inline-block whitespace-nowrap">
+                                    {s.name}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 w-full md:w-auto">
+                        <div className="md:hidden flex-1">
+                            <span className="text-sm font-bold text-brown-900 block">{selectedServices.length} Services Selected</span>
+                        </div>
+                        <button 
+                            onClick={() => setIsBookingOpen(true)}
+                            className="bg-brown-900 text-white px-8 py-4 rounded-full text-base font-medium tracking-wide hover:bg-brown-800 transition-colors shadow-lg w-full md:w-auto"
+                        >
+                            Schedule Visit
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div className="pt-10 pb-16 text-center px-4">
@@ -85,7 +125,7 @@ const ServicesFull = () => {
                 <div className="w-16 h-px bg-brown-900/30 mx-auto"></div>
             </div>
 
-            <main className="max-w-[1440px] mx-auto px-4 md:px-10 pb-20 flex flex-col md:flex-row gap-12">
+            <main className="max-w-[1440px] mx-auto px-4 md:px-10 flex flex-col md:flex-row gap-12">
                 <aside className="hidden md:block w-72 shrink-0">
                     <div className="sticky top-28 max-h-[calc(100vh-140px)] overflow-y-auto scrollbar-hide py-4 pr-2">
                         <nav className="flex flex-col gap-1">
@@ -144,7 +184,7 @@ const ServicesFull = () => {
                                 {service.items && (
                                     <div className="divide-y divide-brown-900/10">
                                         {service.items.map((item, index) => (
-                                            <div key={index} className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-6 group hover:bg-brown-900/5 px-4 rounded-xl transition-all duration-300">
+                                            <div key={index} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center py-6 px-4 rounded-xl transition-all duration-300 ${isSelected(item.name) ? 'bg-brown-900/5' : 'hover:bg-brown-900/5'}`}>
                                                 <div className="mb-4 sm:mb-0">
                                                     <h3 className="text-large font-medium text-brown-900 group-hover:translate-x-1 transition-transform">
                                                         {item.name}
@@ -155,10 +195,19 @@ const ServicesFull = () => {
                                                         {item.price ? `₹ ${item.price}` : ''}
                                                     </span>
                                                     <button 
-                                                        onClick={() => handleBook(item.name)}
-                                                        className="px-6 py-2 bg-transparent border border-brown-900 text-brown-900 text-xs tracking-wider uppercase font-bold rounded-full hover:bg-brown-900 hover:text-white transition-all duration-300"
+                                                        onClick={() => toggleService(item)}
+                                                        className={`px-6 py-2 border text-xs tracking-wider uppercase font-bold rounded-full transition-all duration-300 flex items-center gap-2
+                                                            ${isSelected(item.name) 
+                                                                ? 'bg-brown-900 text-white border-brown-900' 
+                                                                : 'bg-transparent border-brown-900 text-brown-900 hover:bg-brown-900 hover:text-white'
+                                                            }
+                                                        `}
                                                     >
-                                                        Book
+                                                        {isSelected(item.name) ? (
+                                                            <>Added <Check size={14} /></>
+                                                        ) : (
+                                                            <>Add <Plus size={14} /></>
+                                                        )}
                                                     </button>
                                                 </div>
                                             </div>
@@ -175,7 +224,7 @@ const ServicesFull = () => {
                                                 </h3>
                                                 <div className="divide-y divide-brown-900/10 bg-white rounded-2xl p-4 shadow-sm border border-brown-900/5">
                                                     {sub.items.map((item, itemIdx) => (
-                                                        <div key={itemIdx} className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-5 group hover:pl-2 transition-all">
+                                                        <div key={itemIdx} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center py-5 px-4 -mx-4 rounded-lg transition-all ${isSelected(item.name) ? 'bg-brown-900/5' : 'hover:bg-brown-50'}`}>
                                                             <span className="text-brown-900 font-medium text-lg w-full sm:w-auto mb-2 sm:mb-0">
                                                                 {item.name}
                                                             </span>
@@ -184,10 +233,19 @@ const ServicesFull = () => {
                                                                     {item.price ? `₹ ${item.price}` : ''}
                                                                 </span>
                                                                 <button 
-                                                                    onClick={() => handleBook(item.name)}
-                                                                    className="px-5 py-2 bg-brown-50 text-brown-900 text-xs tracking-wider uppercase font-bold rounded-full hover:bg-brown-900 hover:text-white transition-all duration-300"
+                                                                    onClick={() => toggleService(item)}
+                                                                    className={`px-5 py-2 border text-xs tracking-wider uppercase font-bold rounded-full transition-all duration-300 flex items-center gap-2
+                                                                        ${isSelected(item.name) 
+                                                                            ? 'bg-brown-900 text-white border-brown-900' 
+                                                                            : 'bg-brown-50 border-transparent text-brown-900 hover:bg-brown-900 hover:text-white'
+                                                                        }
+                                                                    `}
                                                                 >
-                                                                    Book
+                                                                    {isSelected(item.name) ? (
+                                                                        <>Added <Check size={14} /></>
+                                                                    ) : (
+                                                                        <>Add <Plus size={14} /></>
+                                                                    )}
                                                                 </button>
                                                             </div>
                                                         </div>
