@@ -93,11 +93,35 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
 
     // --- Final Booking ---
     const handleConfirm = () => {
+        // Validation
         if (!selectedDate || !selectedTime || !formData.name) return;
+        
+        // precise 10 digit validation
+        const phoneRegex = /^\d{10}$/;
+        // Remove spaces/dashes before checking
+        const cleanPhone = formData.phone.replace(/[\s-]/g, '');
+        
+        if (!cleanPhone || !phoneRegex.test(cleanPhone)) {
+             alert("Please enter a valid 10-digit phone number.");
+             return;
+        }
 
         const dateStr = selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
         const servicesList = selectedServices.map(s => s.name).join(', ');
         
+        // Save to LocalStorage
+        const bookingDetails = {
+            name: formData.name,
+            phone: cleanPhone,
+            date: dateStr,
+            time: selectedTime,
+            services: selectedServices.map(s => s.name),
+            status: 'confirmed', // Optimistic UI
+            timestamp: new Date().toISOString()
+        };
+        localStorage.setItem('saaga_appointment', JSON.stringify(bookingDetails));
+
+        // WhatsApp Redirect
         const message = `*New Appointment Request*\n\n` +
             `*Name:* ${formData.name}\n` +
             `*Date:* ${dateStr}\n` +
@@ -107,8 +131,16 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
 
         const phoneNumber = "919112157691";
         const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        
+        // Open WA in new tab
         window.open(url, '_blank');
+        
+        // Close modal and refresh/notify parent if needed
         onClose();
+        // Force reload or event dispatch could go here if Schedule page needs it immediately, 
+        // but Schedule.jsx listens to storage or mount. 
+        // For smoother UX, we might want to navigate to /schedule or just close.
+        // Assuming current behavior is just close.
     };
 
 

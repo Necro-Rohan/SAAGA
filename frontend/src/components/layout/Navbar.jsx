@@ -28,9 +28,9 @@ const Navbar = ({ showLogo = false, onOpenBooking }) => {
                     <a href="/#shop" className="text-brown-900 text-base font-normal tracking-[0.5px] hover:opacity-80 transition-opacity">shop</a>
                     <a href="/#offers" className="text-brown-900 text-base font-normal tracking-[0.5px] hover:opacity-80 transition-opacity">offers</a>
                     <a href="/#locate" className="text-brown-900 text-base font-normal tracking-[0.5px] hover:opacity-80 transition-opacity">locate us</a>
-                    <a href="/schedule" className="px-8 py-3 text-base text-brown-900 font-medium tracking-[0.5px] border border-brown-600 rounded-full hover:bg-brown-600 hover:text-white transition-all duration-300">
+                    <Link to="/schedule" className="px-8 py-3 text-base text-brown-900 font-medium tracking-[0.5px] border border-brown-600 rounded-full hover:bg-brown-600 hover:text-white transition-all duration-300">
                         Schedule Visit
-                    </a>
+                    </Link>
                 </div>
             </div>
 
@@ -56,15 +56,13 @@ const Navbar = ({ showLogo = false, onOpenBooking }) => {
                     <a href="#shop" onClick={() => setIsMenuOpen(false)} className="text-brown-900 text-3xl font-serif">Shop</a>
                     <a href="#offers" onClick={() => setIsMenuOpen(false)} className="text-brown-900 text-3xl font-serif">Offers</a>
                     <a href="#locate" onClick={() => setIsMenuOpen(false)} className="text-brown-900 text-3xl font-serif">Locate Us</a>
-                    <button 
-                        onClick={() => {
-                            setIsMenuOpen(false);
-                            if (onOpenBooking) onOpenBooking();
-                        }} 
+                    <Link 
+                        to="/schedule"
+                        onClick={() => setIsMenuOpen(false)}
                         className="mt-4 px-10 py-4 text-lg text-brown-900 border border-brown-900 rounded-full"
                     >
                         Schedule Visit
-                    </button>
+                    </Link>
                 </div>
             </div>
         </nav>
