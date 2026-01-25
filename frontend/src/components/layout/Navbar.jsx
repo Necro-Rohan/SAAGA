@@ -25,7 +25,7 @@ const Navbar = ({ showLogo = false, onOpenBooking }) => {
 
                 <div className={`flex items-center ${showLogo ? 'gap-12' : 'gap-16 lg:gap-24'}`}>
                     <Link to="/services" className="text-brown-900 text-base font-normal tracking-[0.5px] hover:opacity-80 transition-opacity">services</Link>
-                    <a href="/#shop" className="text-brown-900 text-base font-normal tracking-[0.5px] hover:opacity-80 transition-opacity">shop</a>
+                    <Link to="/shop" className="text-brown-900 text-base font-normal tracking-[0.5px] hover:opacity-80 transition-opacity">shop</Link>
                     <Link to="/offers" className="text-brown-900 text-base font-normal tracking-[0.5px] hover:opacity-80 transition-opacity">offers</Link>
                     <a href="/#locate" className="text-brown-900 text-base font-normal tracking-[0.5px] hover:opacity-80 transition-opacity">locate us</a>
                     <Link to="/schedule" className="px-8 py-3 text-base text-brown-900 font-medium tracking-[0.5px] border border-brown-600 rounded-full hover:bg-brown-600 hover:text-white transition-all duration-300">
@@ -53,7 +53,7 @@ const Navbar = ({ showLogo = false, onOpenBooking }) => {
 
                 <div className="flex flex-col gap-8 text-center">
                     <a href="#services" onClick={() => setIsMenuOpen(false)} className="text-brown-900 text-3xl font-serif">Services</a>
-                    <a href="#shop" onClick={() => setIsMenuOpen(false)} className="text-brown-900 text-3xl font-serif">Shop</a>
+                    <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-brown-900 text-3xl font-serif">Shop</Link>
                     <Link to="/offers" onClick={() => setIsMenuOpen(false)} className="text-brown-900 text-3xl font-serif">Offers</Link>
                     <a href="#locate" onClick={() => setIsMenuOpen(false)} className="text-brown-900 text-3xl font-serif">Locate Us</a>
                     <Link 
