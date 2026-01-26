@@ -61,7 +61,7 @@ npm start
 
 # admin 
 ```
-added
+added connected
 ```
 
 ## Build for production
