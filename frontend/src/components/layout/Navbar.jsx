@@ -33,9 +33,12 @@ const Navbar = ({ showLogo = false, onOpenBooking }) => {
         {showLogo && (
           <Link
             to="/"
-            className="font-serif text-3xl font-bold text-brown-900 tracking-widest"
+            className="font-serif text-3xl font-bold text-brown-900 flex items-center"
           >
-            SAAGAA
+            <span className="mr-[0.2px]">S</span>
+            <span>AA</span>
+            <span className="mx-[0.2px]">G</span>
+            <span>AA</span>
           </Link>
         )}
 
