@@ -14,32 +14,32 @@ const ServicesFull = () => {
 
     // Map categories to images (cycling through available ones if needed)
     const categoryImages = {
-        "nails": "/Nails.jpg",
-        "hair-his": "/Hairs.jpg",
-        "hair-her": "/Hairs.jpg",
-        "styling-her": "/Hairs.jpg",
-        "shampoo": "/Hairs.jpg", 
-        "head-massage": "/Hairs.jpg", 
-        "texture": "/Hairs.jpg", 
-        "hair-treatments": "/Hairs.jpg", 
-        "hair-spa": "/Hairs.jpg", 
-        "hair-color": "/Hairs.jpg", 
-        "skin": facialImage,
+        "nails": "/nails_service.png",
+        "hair-his": "/hair_service.png",
+        "hair-her": "/hair_service.png",
+        "styling-her": "/hair_service.png",
+        "shampoo": "/hair_service.png",
+        "head-massage": "/hair_service.png",
+        "texture": "/hair_service.png",
+        "hair-treatments": "/hair_service.png",
+        "hair-spa": "/hair_service.png",
+        "hair-color": "/hair_service.png",
+        "skin": "/facial_service.png",
         "wax": waxImage,
-        "threading": facialImage, 
-        "bleach": facialImage, 
-        "body": waxImage, 
-        "hands-feet": "/Nails.jpg",
+        "threading": "/facial_service.png",
+        "bleach": "/facial_service.png",
+        "body": waxImage,
+        "hands-feet": "/nails_service.png",
         "lashes": "/Eyelashes.png",
-        "his-packages": "/Hairs.jpg",
-        "her-packages": "/Hairs.jpg"
+        "his-packages": "/hair_service.png",
+        "her-packages": "/hair_service.png"
     };
 
     const scrollToCategory = (id) => {
         setActiveCategory(id);
         const element = document.getElementById(id);
         if (element) {
-            const headerOffset = 180;
+            const headerOffset = 200;
             const elementPosition = element.getBoundingClientRect().top;
             const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
             window.scrollTo({ top: offsetPosition, behavior: "smooth" });
@@ -65,24 +65,35 @@ const ServicesFull = () => {
     }, []);
 
     // Toggle Service Selection
-    const toggleService = (item) => {
-        if (selectedServices.some(s => s.name === item.name)) {
-            setSelectedServices(selectedServices.filter(s => s.name !== item.name));
+    const toggleService = (item, variant = null, priceOverride = null) => {
+        const itemName = variant ? `${item.name} (${variant})` : item.name;
+
+        if (selectedServices.some(s => s.name === itemName)) {
+            setSelectedServices(selectedServices.filter(s => s.name !== itemName));
         } else {
-            setSelectedServices([...selectedServices, item]);
+            setSelectedServices([...selectedServices, {
+                ...item,
+                name: itemName,
+                price: priceOverride || item.price
+            }]);
         }
     };
 
-    const isSelected = (itemName) => selectedServices.some(s => s.name === itemName);
+    const isSelected = (item, variant = null) => {
+        const itemName = variant ? `${item.name} (${variant})` : item.name;
+        return selectedServices.some(s => s.name === itemName);
+    };
 
     return (
         <div className="min-h-screen bg-cream text-brown-900 font-sans selection:bg-brown-900 selection:text-white pb-0">
-            <div className="max-w-[1440px] mx-auto px-6 md:px-10 flex flex-col snap-start">
-                <Navbar showLogo={true} onOpenBooking={() => setIsBookingOpen(true)} />
+            <div className="fixed top-0 left-0 right-0 z-50 bg-cream">
+                <div className="max-w-[1440px] mx-auto px-6 md:px-10">
+                    <Navbar showLogo={true} onOpenBooking={() => setIsBookingOpen(true)} />
+                </div>
             </div>
 
-            <BookingModal 
-                isOpen={isBookingOpen} 
+            <BookingModal
+                isOpen={isBookingOpen}
                 onClose={() => setIsBookingOpen(false)}
                 selectedServices={selectedServices}
             />
@@ -100,12 +111,12 @@ const ServicesFull = () => {
                             ))}
                         </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-4 w-full md:w-auto">
                         <div className="md:hidden flex-1">
                             <span className="text-sm font-bold text-brown-900 block">{selectedServices.length} Services Selected</span>
                         </div>
-                        <button 
+                        <button
                             onClick={() => setIsBookingOpen(true)}
                             className="bg-brown-900 text-white px-8 py-4 rounded-full text-base font-medium tracking-wide hover:bg-brown-800 transition-colors shadow-lg w-full md:w-auto"
                         >
@@ -115,29 +126,20 @@ const ServicesFull = () => {
                 </div>
             </div>
 
-            <div className="pt-10 pb-16 text-center px-4">
-                <span className="text-xs font-semibold tracking-[0.3em] text-brown-400 uppercase mb-4 block animate-fade-in font-sans">
-                    Experience the art of refined beauty
-                </span>
-                <h1 className="font-serif text-4xl md:text-6xl text-brown-900 mb-6 tracking-tight font-medium">
-                    Services We Offer
-                </h1>
-                <div className="w-16 h-px bg-brown-900/30 mx-auto"></div>
-            </div>
 
-            <main className="max-w-[1440px] mx-auto px-4 md:px-10 flex flex-col md:flex-row gap-12">
+
+            <main className="max-w-[1440px] mx-auto px-4 md:px-10 flex flex-col md:flex-row gap-12 pt-32 md:pt-36">
                 <aside className="hidden md:block w-72 shrink-0">
-                    <div className="sticky top-28 max-h-[calc(100vh-140px)] overflow-y-auto scrollbar-hide py-4 pr-2">
+                    <div className="fixed top-32 w-72 max-h-[calc(100vh-140px)] overflow-y-auto scrollbar-hide py-6 pr-4">
                         <nav className="flex flex-col gap-1">
                             {servicesData.map((service) => (
                                 <button
                                     key={service.id}
                                     onClick={() => scrollToCategory(service.id)}
-                                    className={`text-left px-5 py-3 rounded-lg text-base tracking-wide transition-all duration-300 font-serif border border-transparent flex justify-between items-center group ${
-                                        activeCategory === service.id 
-                                            ? 'bg-brown-900 text-white shadow-md translate-x-2' 
-                                            : 'text-brown-600 hover:bg-brown-900/5 hover:text-brown-900'
-                                    }`}
+                                    className={`text-left px-5 py-3 rounded-lg text-base tracking-wide transition-all duration-300 font-serif border border-transparent flex justify-between items-center group ${activeCategory === service.id
+                                        ? 'bg-brown-900 text-white shadow-md translate-x-2'
+                                        : 'text-brown-600 hover:bg-brown-900/5 hover:text-brown-900'
+                                        }`}
                                 >
                                     {service.category}
                                     {activeCategory === service.id && <span className="w-1.5 h-1.5 rounded-full bg-white ml-2"></span>}
@@ -147,32 +149,31 @@ const ServicesFull = () => {
                     </div>
                 </aside>
 
-                <div className="md:hidden sticky top-0 bg-cream z-40 py-4 -mx-4 px-4 border-b border-brown-900/5 overflow-x-auto scrollbar-hide shadow-sm">
-                     <div className="flex gap-2">
+                <div className="md:hidden fixed top-20 left-0 right-0 bg-cream z-40 py-4 px-4 border-b border-brown-900/5 overflow-x-auto scrollbar-hide shadow-sm">
+                    <div className="flex gap-2">
                         {servicesData.map((service) => (
                             <button
                                 key={service.id}
                                 onClick={() => scrollToCategory(service.id)}
-                                className={`whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold tracking-wide border transition-all duration-300 ${
-                                    activeCategory === service.id
-                                        ? 'bg-brown-900 text-white border-brown-900 shadow-md'
-                                        : 'bg-white border-brown-900/10 text-brown-700'
-                                }`}
+                                className={`whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold tracking-wide border transition-all duration-300 ${activeCategory === service.id
+                                    ? 'bg-brown-900 text-white border-brown-900 shadow-md'
+                                    : 'bg-white border-brown-900/10 text-brown-700'
+                                    }`}
                             >
                                 {service.category}
                             </button>
                         ))}
-                     </div>
+                    </div>
                 </div>
 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 mt-16 md:mt-0">
                     <div className="flex flex-col gap-24">
                         {servicesData.map((service) => (
-                            <section key={service.id} id={service.id} className="scroll-mt-32">
+                            <section key={service.id} id={service.id} className="scroll-mt-40">
                                 <div className="mb-10 rounded-3xl overflow-hidden relative h-48 md:h-64 shadow-xl">
-                                    <img 
-                                        src={categoryImages[service.id] || "/Hairs.jpg"} 
-                                        alt={service.category} 
+                                    <img
+                                        src={categoryImages[service.id] || "/Hairs.jpg"}
+                                        alt={service.category}
                                         className="w-full h-full object-cover object-center"
                                     />
                                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
@@ -185,7 +186,7 @@ const ServicesFull = () => {
                                 {service.items && (
                                     <div className="divide-y divide-brown-900/10">
                                         {service.items.map((item, index) => (
-                                            <div key={index} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center py-6 px-4 rounded-xl transition-all duration-300 ${isSelected(item.name) ? 'bg-brown-900/5' : 'hover:bg-brown-900/5'}`}>
+                                            <div key={index} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center py-6 px-4 rounded-xl transition-all duration-300 ${isSelected(item) ? 'bg-brown-900/5' : 'hover:bg-brown-900/5'}`}>
                                                 <div className="mb-4 sm:mb-0">
                                                     <h3 className="text-large font-medium text-brown-900 group-hover:translate-x-1 transition-transform">
                                                         {item.name}
@@ -195,21 +196,63 @@ const ServicesFull = () => {
                                                     <span className="text-xl font-serif text-brown-600">
                                                         {item.price ? `₹ ${item.price}` : ''}
                                                     </span>
-                                                    <button 
-                                                        onClick={() => toggleService(item)}
-                                                        className={`px-6 py-2 border text-xs tracking-wider uppercase font-bold rounded-full transition-all duration-300 flex items-center gap-2
-                                                            ${isSelected(item.name) 
-                                                                ? 'bg-brown-900 text-white border-brown-900' 
-                                                                : 'bg-transparent border-brown-900 text-brown-900 hover:bg-brown-900 hover:text-white'
-                                                            }
-                                                        `}
-                                                    >
-                                                        {isSelected(item.name) ? (
-                                                            <>Added <Check size={14} /></>
-                                                        ) : (
-                                                            <>Add <Plus size={14} /></>
-                                                        )}
-                                                    </button>
+
+                                                    {(item.price && item.price.includes('/')) ? (
+                                                        <div className={`relative overflow-hidden rounded-full border border-brown-900 group/split w-[110px] h-[34px] cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 ${isSelected(item, 'M') || isSelected(item, 'F')
+                                                            ? 'bg-brown-900 border-brown-900'
+                                                            : 'bg-transparent border-brown-900 hover:bg-white'
+                                                            }`}>
+                                                            {/* Default Content: 'Add' */}
+                                                            <div className={`absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] font-bold text-xs uppercase tracking-wider
+                                                                    ${(isSelected(item, 'M') || isSelected(item, 'F')) ? '-translate-y-full opacity-0' : 'group-hover/split:-translate-y-full group-hover/split:opacity-0 text-brown-900'}
+                                                                `}>
+                                                                Add <Plus size={14} className="ml-1" />
+                                                            </div>
+
+                                                            {/* Hover/Selected Content: M | F selection */}
+                                                            <div className={`absolute inset-0 flex items-center justify-between text-xs font-bold transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]
+                                                                    ${(isSelected(item, 'M') || isSelected(item, 'F')) ? 'translate-y-0' : 'translate-y-full group-hover/split:translate-y-0'}
+                                                                `}>
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); toggleService(item, 'M', item.price.split('/')[0].trim()); }}
+                                                                    className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100
+                                                                            ${isSelected(item, 'M')
+                                                                            ? 'bg-brown-900 text-white hover:bg-brown-800'
+                                                                            : 'bg-white text-brown-900'
+                                                                        }`}
+                                                                >
+                                                                    M {isSelected(item, 'M') && <Check size={10} className="ml-0.5" />}
+                                                                </button>
+
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); toggleService(item, 'F', item.price.split('/')[1]?.trim()); }}
+                                                                    className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100
+                                                                            ${isSelected(item, 'F')
+                                                                            ? 'bg-brown-900 text-white hover:bg-brown-800'
+                                                                            : 'bg-white text-brown-900'
+                                                                        }`}
+                                                                >
+                                                                    F {isSelected(item, 'F') && <Check size={10} className="ml-0.5" />}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => toggleService(item)}
+                                                            className={`px-6 py-2 border text-xs tracking-wider uppercase font-bold rounded-full transition-all duration-300 flex items-center gap-2
+                                                                ${isSelected(item)
+                                                                    ? 'bg-brown-900 text-white border-brown-900'
+                                                                    : 'bg-transparent border-brown-900 text-brown-900 hover:bg-brown-900 hover:text-white'
+                                                                }
+                                                            `}
+                                                        >
+                                                            {isSelected(item) ? (
+                                                                <>Added <Check size={14} /></>
+                                                            ) : (
+                                                                <>Add <Plus size={14} /></>
+                                                            )}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
@@ -217,37 +260,84 @@ const ServicesFull = () => {
                                 )}
 
                                 {service.subsections && (
-                                    <div className="flex flex-col gap-12 mt-8">
+                                    <div className="flex flex-col gap-12 mt-12">
                                         {service.subsections.map((sub, idx) => (
                                             <div key={idx}>
-                                                <h3 className="font-serif text-2xl text-brown-800 mb-6 pl-4 border-l-4 border-brown-900">
-                                                    {sub.title}
-                                                </h3>
-                                                <div className="divide-y divide-brown-900/10 bg-white rounded-2xl p-4 shadow-sm border border-brown-900/5">
+                                                <div className="mb-8 pl-4">
+                                                    <h3 className="font-serif text-2xl text-brown-900 inline-block relative pb-3 font-semibold">
+                                                        {sub.title}
+                                                        <span className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-brown-900 via-brown-900/40 to-transparent rounded-full" style={{ width: '130%' }}></span>
+                                                    </h3>
+                                                </div>
+                                                <div className="divide-y divide-brown-900/10">
                                                     {sub.items.map((item, itemIdx) => (
-                                                        <div key={itemIdx} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center py-5 px-4 -mx-4 rounded-lg transition-all ${isSelected(item.name) ? 'bg-brown-900/5' : 'hover:bg-brown-50'}`}>
-                                                            <span className="text-brown-900 font-medium text-lg w-full sm:w-auto mb-2 sm:mb-0">
-                                                                {item.name}
-                                                            </span>
+                                                        <div key={itemIdx} className={`flex flex-col sm:flex-row justify-between items-start sm:items-center py-6 px-4 rounded-xl transition-all duration-300 ${isSelected(item) ? 'bg-brown-900/5' : 'hover:bg-brown-900/5'}`}>
+                                                            <div className="mb-4 sm:mb-0">
+                                                                <h3 className="text-large font-medium text-brown-900 group-hover:translate-x-1 transition-transform">
+                                                                    {item.name}
+                                                                </h3>
+                                                            </div>
                                                             <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
-                                                                <span className="text-brown-600 font-serif text-lg">
+                                                                <span className="text-xl font-serif text-brown-600">
                                                                     {item.price ? `₹ ${item.price}` : ''}
                                                                 </span>
-                                                                <button 
-                                                                    onClick={() => toggleService(item)}
-                                                                    className={`px-5 py-2 border text-xs tracking-wider uppercase font-bold rounded-full transition-all duration-300 flex items-center gap-2
-                                                                        ${isSelected(item.name) 
-                                                                            ? 'bg-brown-900 text-white border-brown-900' 
-                                                                            : 'bg-brown-50 border-transparent text-brown-900 hover:bg-brown-900 hover:text-white'
-                                                                        }
-                                                                    `}
-                                                                >
-                                                                    {isSelected(item.name) ? (
-                                                                        <>Added <Check size={14} /></>
-                                                                    ) : (
-                                                                        <>Add <Plus size={14} /></>
-                                                                    )}
-                                                                </button>
+
+                                                                {(item.price && item.price.includes('/')) ? (
+                                                                    <div className={`relative overflow-hidden rounded-full border border-brown-900 group/split w-[110px] h-[34px] cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 ${isSelected(item, 'M') || isSelected(item, 'F')
+                                                                        ? 'bg-brown-900 border-brown-900'
+                                                                        : 'bg-transparent border-brown-900 hover:bg-white'
+                                                                        }`}>
+                                                                        {/* Default Content: 'Add' */}
+                                                                        <div className={`absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] font-bold text-xs uppercase tracking-wider
+                                                                            ${(isSelected(item, 'M') || isSelected(item, 'F')) ? '-translate-y-full opacity-0' : 'group-hover/split:-translate-y-full group-hover/split:opacity-0 text-brown-900'}
+                                                                        `}>
+                                                                            Add <Plus size={14} className="ml-1" />
+                                                                        </div>
+
+                                                                        {/* Hover/Selected Content: M | F selection */}
+                                                                        <div className={`absolute inset-0 flex items-center justify-between text-xs font-bold transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]
+                                                                            ${(isSelected(item, 'M') || isSelected(item, 'F')) ? 'translate-y-0' : 'translate-y-full group-hover/split:translate-y-0'}
+                                                                        `}>
+                                                                            <button
+                                                                                onClick={(e) => { e.stopPropagation(); toggleService(item, 'M', item.price.split('/')[0].trim()); }}
+                                                                                className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100
+                                                                                    ${isSelected(item, 'M')
+                                                                                        ? 'bg-brown-900 text-white hover:bg-brown-800'
+                                                                                        : 'bg-white text-brown-900'
+                                                                                    }`}
+                                                                            >
+                                                                                M {isSelected(item, 'M') && <Check size={10} className="ml-0.5" />}
+                                                                            </button>
+
+                                                                            <button
+                                                                                onClick={(e) => { e.stopPropagation(); toggleService(item, 'F', item.price.split('/')[1]?.trim()); }}
+                                                                                className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100
+                                                                                    ${isSelected(item, 'F')
+                                                                                        ? 'bg-brown-900 text-white hover:bg-brown-800'
+                                                                                        : 'bg-white text-brown-900'
+                                                                                    }`}
+                                                                            >
+                                                                                F {isSelected(item, 'F') && <Check size={10} className="ml-0.5" />}
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => toggleService(item)}
+                                                                        className={`px-6 py-2 border text-xs tracking-wider uppercase font-bold rounded-full transition-all duration-300 flex items-center gap-2
+                                                                            ${isSelected(item)
+                                                                                ? 'bg-brown-900 text-white border-brown-900'
+                                                                                : 'bg-transparent border-brown-900 text-brown-900 hover:bg-brown-900 hover:text-white'
+                                                                            }
+                                                                        `}
+                                                                    >
+                                                                        {isSelected(item) ? (
+                                                                            <>Added <Check size={14} /></>
+                                                                        ) : (
+                                                                            <>Add <Plus size={14} /></>
+                                                                        )}
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ))}
