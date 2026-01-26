@@ -42,7 +42,7 @@ const reviews = [
         id: 6,
         name: "Piya Batra",
         rating: 5,
-        review: "I recently got a cat-eye nail art done at Saagaa Salon, and it was absolutely fantastic! ✨ I loved the result and would definitely recommend Saga to anyone.",
+        review: "I recently got a cat-eye nail art done at Saagaa Salon, and it was absolutely fantastic! ✨ I loved the result and would definitely recommend Saagaa to anyone.",
         image: "https://lh3.googleusercontent.com/geougc-cs/AMBA38sNzZvVw6c3J6zoRJSkFCgtkrvSuwmcwdTF8Ii9JC51X1p8xqGp4ghKTAJVwjcye7Be5zAKz6hCp6D9zUYm-wBu64SP4tMeJD6U5Dt1wWz8CXbWiAv4uw4jPfg-JxkfLZy9IfGcGsqJl3cZ=s250-p-k-rw",
     },
     {

@@ -9,15 +9,15 @@ const Shop = () => {
 
     return (
         <div className="min-h-screen bg-cream text-brown-900 font-sans">
-             <div className="max-w-[1440px] mx-auto px-6 md:px-10 flex flex-col">
+            <div className="max-w-[1440px] mx-auto px-6 md:px-10 flex flex-col">
                 <Navbar showLogo={true} onOpenBooking={() => setIsBookingOpen(true)} />
                 <div className="w-full h-px bg-beige-300 mb-8 md:mb-12"></div>
             </div>
 
-            <BookingModal 
-                isOpen={isBookingOpen} 
+            <BookingModal
+                isOpen={isBookingOpen}
                 onClose={() => setIsBookingOpen(false)}
-                selectedServices={[]} 
+                selectedServices={[]}
             />
 
             <div className="max-w-4xl mx-auto px-6 pb-20 pt-10 text-center">
@@ -42,17 +42,17 @@ const Shop = () => {
                         <div className="w-24 h-24 bg-brown-50 rounded-full flex items-center justify-center text-brown-300 mb-8 border border-brown-100">
                             <ShoppingBag size={40} strokeWidth={1.5} />
                         </div>
-                        
+
                         <h2 className="font-serif text-3xl md:text-4xl text-brown-900 mb-4">
                             Collection Coming Soon
                         </h2>
-                        
+
                         <p className="text-brown-600 max-w-md mx-auto mb-10 leading-relaxed">
                             We are currently curating an exclusive selection of professional products for your home care regimen.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4">
-                            <Link 
+                            <Link
                                 to="/services"
                                 className="group inline-flex items-center justify-center gap-2 bg-brown-900 text-white px-8 py-4 rounded-full font-medium hover:bg-brown-800 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
                             >
