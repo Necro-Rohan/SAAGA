@@ -7,7 +7,7 @@ const Navbar = ({ showLogo = false, onOpenBooking }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     return (
-        <nav className={`flex justify-between md:justify-center items-center py-4 md:py-6 w-full px-6 relative z-50 ${showLogo ? 'border-b border-brown-900/10' : ''}`}>
+        <nav className={`flex justify-between md:justify-center items-center py-4 md:py-6 w-full max-w-full z-50 ${showLogo ? 'border-b border-brown-900/10' : ''}`}>
 
             {/* Mobile Logo/Brand */}
             <Link to="/" className="md:hidden font-serif text-2xl text-brown-900">
@@ -16,9 +16,9 @@ const Navbar = ({ showLogo = false, onOpenBooking }) => {
 
             {/* Desktop Menu */}
             <div className={`hidden md:flex items-center w-full ${showLogo ? 'justify-between' : 'justify-center gap-16 lg:gap-24'}`}>
-                
+
                 {showLogo && (
-                     <Link to="/" className="font-serif text-3xl font-bold text-brown-900 tracking-widest">
+                    <Link to="/" className="font-serif text-3xl font-bold text-brown-900 tracking-widest">
                         SAAGAA
                     </Link>
                 )}
@@ -56,7 +56,7 @@ const Navbar = ({ showLogo = false, onOpenBooking }) => {
                     <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="text-brown-900 text-3xl font-serif">Shop</Link>
                     <Link to="/offers" onClick={() => setIsMenuOpen(false)} className="text-brown-900 text-3xl font-serif">Offers</Link>
                     <a href="#locate" onClick={() => setIsMenuOpen(false)} className="text-brown-900 text-3xl font-serif">Locate Us</a>
-                    <Link 
+                    <Link
                         to="/schedule"
                         onClick={() => setIsMenuOpen(false)}
                         className="mt-4 px-10 py-4 text-lg text-brown-900 border border-brown-900 rounded-full"

@@ -11,14 +11,14 @@ const Home = () => {
     const [isBookingOpen, setIsBookingOpen] = useState(false);
 
     return (
-        <div className="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth">
+        <div className="h-screen w-full max-w-full overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth relative">
             <BookingModal
                 isOpen={isBookingOpen}
                 onClose={() => setIsBookingOpen(false)}
                 selectedServices={[]}
             />
 
-            <div className="max-w-[1440px] mx-auto px-6 md:px-10 relative h-screen flex flex-col snap-start">
+            <div className="w-full max-w-[1440px] mx-auto px-6 md:px-10 relative h-screen flex flex-col snap-start overflow-hidden">
                 <Navbar showLogo={true} onOpenBooking={() => setIsBookingOpen(true)} />
                 <div className="w-full h-px bg-beige-300 mb-2 md:mb-4"></div>
                 <Hero />

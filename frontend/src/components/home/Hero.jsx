@@ -2,7 +2,7 @@ import ladyImage from '../../assets/lady.png';
 
 const Hero = () => {
     return (
-        <header className="flex flex-col md:flex-row justify-between flex-1 w-full overflow-hidden md:overflow-visible">
+        <header className="flex flex-col md:flex-row justify-between flex-1 w-full max-w-full overflow-hidden">
             <div className="flex-1 flex flex-col justify-center text-center items-center pt-2 md:pt-0">
                 <h1 className="font-serif text-6xl md:text-[5rem] lg:text-[7rem] font-semibold text-brown-700 leading-none tracking-[-2px] mb-2 px-4">
                     SAAGAA
@@ -19,7 +19,7 @@ const Hero = () => {
             </div>
 
             <div className="flex-1 flex justify-center md:justify-end items-end h-[50vh] md:h-full relative mt-8 md:mt-0 w-full md:pr-12">
-                <div className="w-[85%] md:w-auto md:aspect-[5/6] h-full md:h-[min(600px,80vh)] bg-beige-400 rounded-t-[150px] md:rounded-t-[250px] relative">
+                <div className="w-[85%] md:w-auto md:aspect-[5/6] h-full md:h-[min(600px,80vh)] bg-beige-400 rounded-t-[150px] md:rounded-t-[250px] relative overflow-hidden md:overflow-visible">
                     <img
                         src={ladyImage}
                         alt="Relaxed woman beauty portrait"

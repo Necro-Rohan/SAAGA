@@ -96,7 +96,7 @@ const Feedback = () => {
     };
 
     return (
-        <section className="relative w-full bg-[#FCFBF8] h-screen flex flex-col justify-center snap-start">
+        <section className="relative w-full bg-[#FCFBF8] h-screen flex flex-col justify-center snap-start overflow-hidden">
             <div className="max-w-[1400px] mx-auto px-4 md:px-8 w-full">
                 {/* Header */}
                 <div className="text-center mb-20">

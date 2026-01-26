@@ -7,9 +7,9 @@ import { Link } from 'react-router-dom';
   Expanding Flex Card
 */
 const ServiceCard = ({ service, className }) => (
-    <Link 
-        to="/services" 
-        className={`relative flex-1 hover:flex-[2] transition-[flex-grow] duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group overflow-hidden rounded-[2rem] cursor-pointer shadow-lg hover:shadow-2xl mx-2 first:ml-0 last:mr-0 min-w-0 ${className}`}
+    <Link
+        to="/services"
+        className={`relative flex-[1_1_0%] hover:flex-[2_1_0%] transition-[flex] duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group overflow-hidden rounded-[2rem] cursor-pointer min-w-0 ${className}`}
     >
 
         {/* Image */}
@@ -41,7 +41,7 @@ const ServiceCard = ({ service, className }) => (
 
             {/* Bottom Text Area */}
             <div className="relative z-10 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                <h3 className="text-white text-2xl md:text-3xl lg:text-4xl font-serif font-light leading-none tracking-tight whitespace-nowrap mb-2">
+                <h3 className="text-white text-2xl md:text-3xl lg:text-4xl font-serif font-light leading-none tracking-tight mb-2">
                     {service.name}
                 </h3>
 
@@ -111,20 +111,18 @@ const Services = () => {
                 {/* DESKTOP VIEW - FIXED BLOCK matched to Feedback Height (~532px) */}
                 {/* 290 + 226 + 16(gap) = 532px */}
                 <div className="hidden md:flex flex-col gap-4 h-[532px]">
-
                     {/* TOP ROW */}
-                    <div className="flex w-full gap-0 h-[290px]">
+                    <div className="flex w-full gap-4 h-[290px] overflow-hidden">
                         <ServiceCard service={services.facial} className="h-full" />
                         <ServiceCard service={services.hair} className="h-full" />
                     </div>
 
                     {/* BOTTOM ROW */}
-                    <div className="flex w-full gap-0 h-[226px]">
+                    <div className="flex w-full gap-4 h-[226px] overflow-hidden">
                         <ServiceCard service={services.nails} className="h-full" />
                         <ServiceCard service={services.wax} className="h-full" />
                         <ServiceCard service={services.lashes} className="h-full" />
                     </div>
-
                 </div>
 
                 {/* MOBILE VIEW */}
