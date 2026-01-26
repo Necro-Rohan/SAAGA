@@ -1,28 +1,40 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import connectDB from './db.js';
-import authRoutes from './src/routes/authRoutes.js';
-import adminRoutes from './src/routes/adminRoutes.js';
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import connectDB from "./db.js"; 
+
+import authRoutes from "./src/routes/authRoutes.js";
+import publicRoutes from "./src/routes/publicRoutes.js";
+import bookingRoutes from "./src/routes/bookingRoutes.js";
+import adminRoutes from "./src/routes/adminRoutes.js";
 
 dotenv.config();
 
-// Connect to Database
 connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.use(cors({
+    origin: "http://localhost:5173",
+  credentials: true,
+}));
 
-// Middleware
-app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use('/api', authRoutes);
-app.use('/api/admin', adminRoutes);
+// Logging Middleware
+app.use((req, res, next) => {
+  console.log(`[Request] ${req.method} ${req.url}`);
+  next();
+});
 
-app.get('/', (req, res) => {
-  res.send('SAAGAA Backend API Running');
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/public", publicRoutes);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/admin", adminRoutes);
+
+app.get("/", (req, res) => {
+  res.send("SAAGA Backend Running");
 });
 
 app.listen(PORT, () => {

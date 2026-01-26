@@ -9,11 +9,11 @@ const appointmentSchema = new mongoose.Schema({
         ref: "Service",
         required: true,
       },
-      variant: { type: String, enum: ["male", "female"], required: true }, // New field
+      variant: { type: String, enum: ["male", "female"], required: true }, 
     },
   ],
-  products: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }], // New field for Inventory
-  staff: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" }, // New field
+  products: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }], 
+  staff: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" }, 
   date: { type: String, required: true }, // Format: YYYY-MM-DD
   timeSlot: { type: String, required: true }, // Format: "10:00 AM"
   totalAmount: { type: Number, required: true }, // Server-Calculated
@@ -24,5 +24,11 @@ const appointmentSchema = new mongoose.Schema({
   },
   createdAt: { type: Date, default: Date.now },
 });
+
+// Prevent Double Booking: Compound Index
+appointmentSchema.index(
+  { date: 1, timeSlot: 1 },
+  { unique: true, partialFilterExpression: { status: { $ne: "cancelled" } } },
+);
 
 export default mongoose.model("Appointment", appointmentSchema);

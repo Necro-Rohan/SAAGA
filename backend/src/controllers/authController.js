@@ -13,8 +13,8 @@ const generateToken = (id) => {
 export const sendOtp = async (req, res) => {
   const { phone } = req.body;
   try {
-    // Generate 6-digit OTP
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate 4-digit OTP
+    const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
 
     // Save/Update in DB
     await Otp.findOneAndUpdate(
@@ -35,7 +35,7 @@ export const sendOtp = async (req, res) => {
 
 // 2. Verify OTP & Login (Customer)
 export const verifyOtp = async (req, res) => {
-  const { phone, otp } = req.body;
+  const { phone, otp, name } = req.body;
   try {
     const validOtp = await Otp.findOne({ phone, code: otp });
     if (!validOtp) {
@@ -47,7 +47,12 @@ export const verifyOtp = async (req, res) => {
     // Check if User exists, else create
     let user = await User.findOne({ phone });
     if (!user) {
-      user = await User.create({ phone, role: "user" });
+      user = await User.create({ phone, name, role: "user" });
+    } else if (name) {
+      // Optional: Update name if provided and missing? Or always update?
+      // Let's update `name` if user doesn't have one, or maybe even if they do (to correct typo).
+      user.name = name;
+      await user.save();
     }
 
     const token = generateToken(user._id);
