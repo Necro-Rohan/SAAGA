@@ -17,15 +17,15 @@ const Schedule = () => {
 
     return (
         <div className="min-h-screen bg-cream text-brown-900 font-sans">
-             <div className="max-w-[1440px] mx-auto px-6 md:px-10 flex flex-col">
+            <div className="max-w-[1440px] mx-auto px-6 md:px-10 flex flex-col">
                 <Navbar showLogo={true} onOpenBooking={() => setIsBookingOpen(true)} />
                 <div className="w-full h-px bg-beige-300 mb-8 md:mb-12"></div>
             </div>
 
-            <BookingModal 
-                isOpen={isBookingOpen} 
+            <BookingModal
+                isOpen={isBookingOpen}
                 onClose={() => setIsBookingOpen(false)}
-                selectedServices={[]} 
+                selectedServices={[]}
             />
 
             <div className="max-w-3xl mx-auto px-6 pb-20">
@@ -37,7 +37,7 @@ const Schedule = () => {
                 {appointment ? (
                     <div className="bg-white rounded-3xl p-8 shadow-xl border border-brown-900/5 animate-fade-in relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-brown-400 to-brown-900"></div>
-                        
+
                         <div className="flex flex-col md:flex-row gap-8 justify-between items-start md:items-center mb-8 border-b border-brown-900/10 pb-8">
                             <div>
                                 <span className="px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-bold tracking-wider uppercase mb-3 inline-block">
@@ -64,7 +64,7 @@ const Schedule = () => {
                                         <p className="text-lg font-medium text-brown-900">{appointment.date}</p>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex items-start gap-4">
                                     <div className="w-10 h-10 rounded-full bg-brown-50 flex items-center justify-center text-brown-900 shrink-0">
                                         <Clock size={20} />
@@ -111,7 +111,7 @@ const Schedule = () => {
                                 <MapPin size={16} />
                                 <span>SAAGAA Unisex Salon & Spa, Gomti Nagar</span>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => {
                                     localStorage.removeItem('saaga_appointment');
                                     setAppointment(null);
@@ -129,7 +129,7 @@ const Schedule = () => {
                         </div>
                         <h3 className="font-serif text-2xl text-brown-900 mb-2">No Upcoming Visits</h3>
                         <p className="text-brown-600 mb-8 max-w-sm mx-auto">You haven't scheduled any appointments with us yet. Book your session to experience luxury.</p>
-                        <button 
+                        <button
                             onClick={() => setIsBookingOpen(true)}
                             className="bg-brown-900 text-white px-8 py-3 rounded-full font-medium hover:bg-brown-800 transition-colors shadow-lg"
                         >
