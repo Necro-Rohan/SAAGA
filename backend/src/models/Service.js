@@ -4,7 +4,7 @@ const serviceSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     category: { type: String, required: true },
-    subcategory: { type: String }, // New field
+    subcategory: { type: String }, 
     prices: {
       male: { type: Number },
       female: { type: Number },

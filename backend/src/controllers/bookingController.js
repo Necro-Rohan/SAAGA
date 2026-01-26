@@ -88,7 +88,6 @@ export const createBooking = async (req, res) => {
     // Services
     if (services && services.length > 0) {
       for (const item of services) {
-        // STRICT RULE: Only allowing booking of Active services
         const service = await Service.findOne({
           _id: item.serviceId,
           isActive: true,
@@ -108,22 +107,20 @@ export const createBooking = async (req, res) => {
         if (!product) throw new Error(`Product not available: ${prodId}`);
         totalAmount += product.price;
 
-        // Decreasing Stock 
+        // Decreasing Stock
         await Product.findByIdAndUpdate(prodId, { $inc: { stock: -1 } });
-
       }
     }
 
-    // C. Create Appointment
     const appointment = await Appointment.create({
-      user: userId,
+      userId: userId,
       date: new Date(date),
       timeSlot,
       services,
       products,
       staff: staffId,
       totalAmount,
-      status: "booked",
+      status: "confirmed",
     });
 
     try {
@@ -143,5 +140,64 @@ export const createBooking = async (req, res) => {
   } catch (error) {
     console.error("Booking Error:", error);
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+// 3. Get User Bookings
+export const getUserBookings = async (req, res) => {
+  try {
+    const appointments = await Appointment.find({ userId: req.user.id })
+      .populate("services.serviceId")
+      .populate("products")
+      .sort({ date: 1 });
+    res.json(appointments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// 4. Cancel Booking
+export const cancelBooking = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    // Verify ownership
+    if (appointment.userId.toString() !== req.user.id) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to cancel this booking" });
+    }
+
+    // Check if already cancelled or completed
+    if (appointment.status === "cancelled") {
+      return res.status(400).json({ message: "Booking is already cancelled" });
+    }
+    if (appointment.status === "completed") {
+      return res
+        .status(400)
+        .json({ message: "Cannot cancel a completed booking" });
+    }
+
+    // Update status
+    appointment.status = "cancelled";
+    await appointment.save();
+
+    // Optionally: Increase product stock back if products were purchased?
+    // Current logic decreased stock on booking. We should probably increase it back.
+    if (appointment.products && appointment.products.length > 0) {
+      for (const prodId of appointment.products) {
+        await Product.findByIdAndUpdate(prodId, { $inc: { stock: 1 } });
+      }
+    }
+
+    res.json({ message: "Appointment cancelled successfully", appointment });
+  } catch (error) {
+    console.error("Cancellation Error:", error);
+    res.status(500).json({ message: error.message });
   }
 };
