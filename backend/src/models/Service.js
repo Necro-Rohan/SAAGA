@@ -1,0 +1,17 @@
+import mongoose from "mongoose";
+
+const serviceSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    category: { type: String, required: true },
+    subcategory: { type: String }, // New field
+    prices: {
+      male: { type: Number },
+      female: { type: Number },
+    },
+    isActive: { type: Boolean, default: true }, // Soft Delete
+  },
+  { timestamps: true },
+);
+
+export default mongoose.model("Service", serviceSchema);
