@@ -72,6 +72,14 @@ export const api = {
         delete: (id) => api.delete(`/api/admin/offers/${id}`),
     },
 
+    // Categories
+    categories: {
+        getAll: () => api.get('/api/admin/categories'),
+        create: (data) => api.post('/api/admin/categories', data),
+        update: (id, data) => api.put(`/api/admin/categories/${id}`, data),
+        delete: (id) => api.delete(`/api/admin/categories/${id}`),
+    },
+
     // Profile
     profile: {
         get: () => api.get('/api/admin/profile'),

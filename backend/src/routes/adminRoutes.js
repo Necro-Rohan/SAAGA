@@ -4,6 +4,7 @@ import {
   createService,
   updateService,
   deleteService,
+  getAllServices,
   createProduct,
   updateProduct,
   createStaff,
@@ -12,6 +13,10 @@ import {
   unblockSlot,
   getDashboardStats,
   getAllBookings,
+  getAllCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -26,6 +31,7 @@ router.get("/stats", getDashboardStats);
 router.get("/bookings", getAllBookings);
 
 // Services
+router.get("/services", getAllServices);
 router.post("/services", createService);
 router.put("/services/:id", updateService);
 router.delete("/services/:id", deleteService); // Soft Delete
@@ -41,5 +47,11 @@ router.get("/staff", getStaff);
 // Blocked Slots
 router.post("/blocked-slots", blockSlot);
 router.delete("/blocked-slots/:id", unblockSlot);
+
+// Categories
+router.get("/categories", getAllCategories);
+router.post("/categories", createCategory);
+router.put("/categories/:id", updateCategory);
+router.delete("/categories/:id", deleteCategory);
 
 export default router;

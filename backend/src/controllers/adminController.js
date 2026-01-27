@@ -3,8 +3,18 @@ import Product from "../models/Product.js";
 import Staff from "../models/Staff.js";
 import BlockedSlot from "../models/BlockedSlot.js";
 import Appointment from "../models/Appointment.js";
+import Category from "../models/Category.js";
 
 // --- Services ---
+export const getAllServices = async (req, res) => {
+  try {
+    const services = await Service.find().sort({ category: 1, name: 1 });
+    res.json(services);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const createService = async (req, res) => {
   try {
     const service = await Service.create(req.body);
@@ -131,3 +141,43 @@ export const getAllBookings = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// --- Categories ---
+export const getAllCategories = async (req, res) => {
+  try {
+    const categories = await Category.find({ isActive: true }).sort({ order: 1 });
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const createCategory = async (req, res) => {
+  try {
+    const category = await Category.create(req.body);
+    res.status(201).json(category);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateCategory = async (req, res) => {
+  try {
+    const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    res.status(200).json(category);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteCategory = async (req, res) => {
+  try {
+    await Category.findByIdAndUpdate(req.params.id, { isActive: false });
+    res.status(200).json({ message: "Category disabled" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
