@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import api from '../../utils/api';
 
 const SettingsPanel = ({ adminUser }) => {
     const [email, setEmail] = useState(adminUser?.email || '');
@@ -7,11 +8,7 @@ const SettingsPanel = ({ adminUser }) => {
     const handleUpdate = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch('http://localhost:5001/api/admin/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
-            });
+            const res = await api.put('/api/admin/profile', { email });
             if (res.ok) {
                 setMsg('Email updated successfully!');
                 // Update local storage if needed, but optimally relaunch auth

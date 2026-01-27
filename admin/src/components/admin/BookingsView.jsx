@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, User, Phone } from 'lucide-react';
+import api from '../../utils/api';
 
 const BookingsView = () => {
     const [bookings, setBookings] = useState([]);
@@ -10,7 +11,7 @@ const BookingsView = () => {
 
     const fetchBookings = async () => {
         try {
-            const res = await fetch('http://localhost:5001/api/admin/bookings');
+            const res = await api.bookings.getAll();
             const data = await res.json();
             setBookings(data);
         } catch (error) {

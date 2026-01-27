@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
+import api from '../../utils/api';
 
 const OffersManager = () => {
     const [offers, setOffers] = useState([]);
@@ -14,7 +15,7 @@ const OffersManager = () => {
 
     const fetchOffers = async () => {
         try {
-            const res = await fetch('http://localhost:5001/api/admin/offers');
+            const res = await api.offers.getAll();
             const data = await res.json();
             setOffers(data);
         } catch (error) {
@@ -29,11 +30,7 @@ const OffersManager = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await fetch('http://localhost:5001/api/admin/offers', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
+            await api.offers.create(formData);
             setIsModalOpen(false);
             setFormData({ title: '', code: '', discountType: 'percentage', discountValue: '', isActive: true });
             fetchOffers();
@@ -45,7 +42,7 @@ const OffersManager = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Delete this offer?')) return;
         try {
-            await fetch(`http://localhost:5001/api/admin/offers/${id}`, { method: 'DELETE' });
+            await api.offers.delete(id);
             fetchOffers();
         } catch (error) {
             console.error('Error deleting offer:', error);

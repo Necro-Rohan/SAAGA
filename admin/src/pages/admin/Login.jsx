@@ -12,7 +12,7 @@ const AdminLogin = () => {
         setError('');
 
         try {
-            const response = await fetch('http://localhost:5001/api/admin/login', {
+            const response = await fetch('http://localhost:5001/api/auth/admin/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -23,8 +23,9 @@ const AdminLogin = () => {
             const data = await response.json();
 
             if (response.ok) {
-                // Simple auth state - store in localStorage
-                localStorage.setItem('adminUser', JSON.stringify(data.user)); // stored as 'user' in response
+                // Store both token and user in localStorage
+                localStorage.setItem('adminToken', data.token);
+                localStorage.setItem('adminUser', JSON.stringify(data.user));
                 navigate('/dashboard');
             } else {
                 setError(data.message || 'Login failed'); // backend sends 'message'

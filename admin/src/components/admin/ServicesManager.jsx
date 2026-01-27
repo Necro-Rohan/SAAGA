@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import api from '../../utils/api';
 
 const ServicesManager = () => {
     const [services, setServices] = useState([]);
@@ -16,7 +17,7 @@ const ServicesManager = () => {
 
     const fetchServices = async () => {
         try {
-            const res = await fetch('http://localhost:5001/api/admin/services');
+            const res = await api.services.getAll();
             const data = await res.json();
             setServices(data);
         } catch (error) {
@@ -30,18 +31,13 @@ const ServicesManager = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const url = editingService
-            ? `http://localhost:5001/api/admin/services/${editingService._id}`
-            : 'http://localhost:5001/api/admin/services';
-
-        const method = editingService ? 'PUT' : 'POST';
 
         try {
-            await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
+            if (editingService) {
+                await api.services.update(editingService._id, formData);
+            } else {
+                await api.services.create(formData);
+            }
             setIsModalOpen(false);
             setEditingService(null);
             setFormData({ name: '', category: '', price: '', description: '', image: '', isActive: true });
@@ -54,7 +50,7 @@ const ServicesManager = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure?')) return;
         try {
-            await fetch(`http://localhost:5001/api/admin/services/${id}`, { method: 'DELETE' });
+            await api.services.delete(id);
             fetchServices();
         } catch (error) {
             console.error('Error deleting service:', error);

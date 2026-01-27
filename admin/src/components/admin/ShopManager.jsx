@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import api from '../../utils/api';
 
 const ShopManager = () => {
     const [products, setProducts] = useState([]);
@@ -15,7 +16,7 @@ const ShopManager = () => {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch('http://localhost:5001/api/admin/products');
+            const res = await api.products.getAll();
             const data = await res.json();
             setProducts(data);
         } catch (error) {
@@ -29,18 +30,13 @@ const ShopManager = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const url = editingProduct
-            ? `http://localhost:5001/api/admin/products/${editingProduct._id}`
-            : 'http://localhost:5001/api/admin/products';
-
-        const method = editingProduct ? 'PUT' : 'POST';
 
         try {
-            await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
+            if (editingProduct) {
+                await api.products.update(editingProduct._id, formData);
+            } else {
+                await api.products.create(formData);
+            }
             setIsModalOpen(false);
             setEditingProduct(null);
             setFormData({ name: '', category: '', price: '', stock: 0, image: '' });
@@ -53,7 +49,7 @@ const ShopManager = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure?')) return;
         try {
-            await fetch(`http://localhost:5001/api/admin/products/${id}`, { method: 'DELETE' });
+            await api.products.delete(id);
             fetchProducts();
         } catch (error) {
             console.error('Error deleting product:', error);
