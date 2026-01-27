@@ -4,6 +4,7 @@ import Service from "../models/Service.js";
 import Product from "../models/Product.js";
 import Staff from "../models/Staff.js";
 import Offer from "../models/Offer.js";
+import Category from "../models/Category.js";
 
 const router = express.Router();
 
@@ -46,6 +47,16 @@ router.get("/offers", async (req, res) => {
   try {
     const offers = await Offer.find({ isActive: true });
     res.json(offers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// 6. Get All Categories
+router.get("/categories", async (req, res) => {
+  try {
+    const categories = await Category.find({}).sort({ order: 1 });
+    res.json(categories);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

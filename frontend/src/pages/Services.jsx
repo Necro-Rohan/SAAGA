@@ -17,28 +17,7 @@ const ServicesFull = () => {
   const { activeBooking } = useBooking();
   const navigate = useNavigate();
 
-  // Map categories to images (cycling through available ones if needed)
-  const categoryImages = {
-    nails: "/nails_service.png",
-    "hair-his": "/hair_service.png",
-    "hair-her": "/hair_service.png",
-    "styling-her": "/hair_service.png",
-    shampoo: "/hair_service.png",
-    "head-massage": "/hair_service.png",
-    texture: "/hair_service.png",
-    "hair-treatments": "/hair_service.png",
-    "hair-spa": "/hair_service.png",
-    "hair-color": "/hair_service.png",
-    skin: facialImage,
-    wax: waxImage,
-    threading: facialImage,
-    bleach: facialImage,
-    body: waxImage,
-    "hands-feet": "/nails_service.png",
-    lashes: "/Eyelashes.png",
-    "his-packages": "/hair_service.png",
-    "her-packages": "/hair_service.png",
-  };
+  const [categoryImages, setCategoryImages] = useState({});
 
   const scrollToCategory = (id) => {
     setActiveCategory(id);
@@ -96,22 +75,42 @@ const ServicesFull = () => {
   };
 
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:5001/api/public/services",
-        );
-        const structuredData = transformData(res.data);
+        const [servicesRes, categoriesRes] = await Promise.all([
+          axios.get("http://localhost:5001/api/public/services"),
+          axios.get("http://localhost:5001/api/public/categories")
+        ]);
+
+        // Process Categories to create Image Map
+        const imageMap = {};
+        categoriesRes.data.forEach(cat => {
+          let catId = cat.name
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[()]/g, "");
+
+          // Apply same overrides as services to ensure matching keys
+          if (cat.name === "Nails & Nail Art") catId = "nails";
+          if (cat.name === "Hair (His)") catId = "hair-his";
+          if (cat.name === "Hair (Her)") catId = "hair-her";
+
+          if (cat.image) {
+            imageMap[catId] = cat.image;
+          }
+        });
+        setCategoryImages(imageMap);
+
+        const structuredData = transformData(servicesRes.data);
         setServices(structuredData);
         if (structuredData.length > 0) setActiveCategory(structuredData[0].id);
       } catch (err) {
-        console.error("Failed to fetch services", err);
-        // Fallback to empty or error state? Keeping partial UI if fail.
+        console.error("Failed to fetch data", err);
       } finally {
         setLoading(false);
       }
     };
-    fetchServices();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -234,11 +233,10 @@ const ServicesFull = () => {
                 <button
                   key={service.id}
                   onClick={() => scrollToCategory(service.id)}
-                  className={`text-left px-5 py-3 rounded-lg text-base tracking-wide transition-all duration-300 font-serif border border-transparent flex justify-between items-center group ${
-                    activeCategory === service.id
-                      ? "bg-brown-900 text-white shadow-md translate-x-2"
-                      : "text-brown-600 hover:bg-brown-900/5 hover:text-brown-900"
-                  }`}
+                  className={`text-left px-5 py-3 rounded-lg text-base tracking-wide transition-all duration-300 font-serif border border-transparent flex justify-between items-center group ${activeCategory === service.id
+                    ? "bg-brown-900 text-white shadow-md translate-x-2"
+                    : "text-brown-600 hover:bg-brown-900/5 hover:text-brown-900"
+                    }`}
                 >
                   {service.category}
                   {activeCategory === service.id && (
@@ -256,11 +254,10 @@ const ServicesFull = () => {
               <button
                 key={service.id}
                 onClick={() => scrollToCategory(service.id)}
-                className={`whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold tracking-wide border transition-all duration-300 ${
-                  activeCategory === service.id
-                    ? "bg-brown-900 text-white border-brown-900 shadow-md"
-                    : "bg-white border-brown-900/10 text-brown-700"
-                }`}
+                className={`whitespace-nowrap px-5 py-2 rounded-full text-xs font-bold tracking-wide border transition-all duration-300 ${activeCategory === service.id
+                  ? "bg-brown-900 text-white border-brown-900 shadow-md"
+                  : "bg-white border-brown-900/10 text-brown-700"
+                  }`}
               >
                 {service.category}
               </button>
@@ -269,7 +266,7 @@ const ServicesFull = () => {
         </div>
 
         <div className="flex-1 min-w-0 mt-16 md:mt-0">
-          <div className="flex flex-col gap-24">
+          <div className="flex flex-col gap-10">
             {services.map((service) => (
               <section
                 key={service.id}
@@ -308,11 +305,10 @@ const ServicesFull = () => {
 
                           {item.price && item.price.includes("/") ? (
                             <div
-                              className={`relative overflow-hidden rounded-full border border-brown-900 group/split w-[110px] h-[34px] cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 ${
-                                isSelected(item, "M") || isSelected(item, "F")
-                                  ? "bg-brown-900 border-brown-900"
-                                  : "bg-transparent border-brown-900 hover:bg-white"
-                              }`}
+                              className={`relative overflow-hidden rounded-full border border-brown-900 group/split w-[110px] h-[34px] cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 ${isSelected(item, "M") || isSelected(item, "F")
+                                ? "bg-brown-900 border-brown-900"
+                                : "bg-transparent border-brown-900 hover:bg-white"
+                                }`}
                             >
                               {/* Default Content: 'Add' */}
                               <div
@@ -339,14 +335,13 @@ const ServicesFull = () => {
                                     );
                                   }}
                                   className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100
-                                                                            ${
-                                                                              isSelected(
-                                                                                item,
-                                                                                "M",
-                                                                              )
-                                                                                ? "bg-brown-900 text-white hover:bg-brown-800"
-                                                                                : "bg-white text-brown-900"
-                                                                            }`}
+                                                                            ${isSelected(
+                                    item,
+                                    "M",
+                                  )
+                                      ? "bg-brown-900 text-white hover:bg-brown-800"
+                                      : "bg-white text-brown-900"
+                                    }`}
                                 >
                                   M{" "}
                                   {isSelected(item, "M") && (
@@ -364,14 +359,13 @@ const ServicesFull = () => {
                                     );
                                   }}
                                   className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100
-                                                                            ${
-                                                                              isSelected(
-                                                                                item,
-                                                                                "F",
-                                                                              )
-                                                                                ? "bg-brown-900 text-white hover:bg-brown-800"
-                                                                                : "bg-white text-brown-900"
-                                                                            }`}
+                                                                            ${isSelected(
+                                    item,
+                                    "F",
+                                  )
+                                      ? "bg-brown-900 text-white hover:bg-brown-800"
+                                      : "bg-white text-brown-900"
+                                    }`}
                                 >
                                   F{" "}
                                   {isSelected(item, "F") && (
@@ -384,13 +378,12 @@ const ServicesFull = () => {
                             <button
                               onClick={() => toggleService(item)}
                               className={`px-6 py-2 border text-xs tracking-wider uppercase font-bold rounded-full transition-all duration-300 flex items-center gap-2
-                                                                ${
-                                                                  isSelected(
-                                                                    item,
-                                                                  )
-                                                                    ? "bg-brown-900 text-white border-brown-900"
-                                                                    : "bg-transparent border-brown-900 text-brown-900 hover:bg-brown-900 hover:text-white"
-                                                                }
+                                                                ${isSelected(
+                                item,
+                              )
+                                  ? "bg-brown-900 text-white border-brown-900"
+                                  : "bg-transparent border-brown-900 text-brown-900 hover:bg-brown-900 hover:text-white"
+                                }
                                                             `}
                             >
                               {isSelected(item) ? (
@@ -441,12 +434,11 @@ const ServicesFull = () => {
 
                                 {item.price && item.price.includes("/") ? (
                                   <div
-                                    className={`relative overflow-hidden rounded-full border border-brown-900 group/split w-[110px] h-[34px] cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 ${
-                                      isSelected(item, "M") ||
+                                    className={`relative overflow-hidden rounded-full border border-brown-900 group/split w-[110px] h-[34px] cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 ${isSelected(item, "M") ||
                                       isSelected(item, "F")
-                                        ? "bg-brown-900 border-brown-900"
-                                        : "bg-transparent border-brown-900 hover:bg-white"
-                                    }`}
+                                      ? "bg-brown-900 border-brown-900"
+                                      : "bg-transparent border-brown-900 hover:bg-white"
+                                      }`}
                                   >
                                     {/* Default Content: 'Add' */}
                                     <div
@@ -473,14 +465,13 @@ const ServicesFull = () => {
                                           );
                                         }}
                                         className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100
-                                                                                    ${
-                                                                                      isSelected(
-                                                                                        item,
-                                                                                        "M",
-                                                                                      )
-                                                                                        ? "bg-brown-900 text-white hover:bg-brown-800"
-                                                                                        : "bg-white text-brown-900"
-                                                                                    }`}
+                                                                                    ${isSelected(
+                                          item,
+                                          "M",
+                                        )
+                                            ? "bg-brown-900 text-white hover:bg-brown-800"
+                                            : "bg-white text-brown-900"
+                                          }`}
                                       >
                                         M{" "}
                                         {isSelected(item, "M") && (
@@ -498,14 +489,13 @@ const ServicesFull = () => {
                                           );
                                         }}
                                         className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100
-                                                                                    ${
-                                                                                      isSelected(
-                                                                                        item,
-                                                                                        "F",
-                                                                                      )
-                                                                                        ? "bg-brown-900 text-white hover:bg-brown-800"
-                                                                                        : "bg-white text-brown-900"
-                                                                                    }`}
+                                                                                    ${isSelected(
+                                          item,
+                                          "F",
+                                        )
+                                            ? "bg-brown-900 text-white hover:bg-brown-800"
+                                            : "bg-white text-brown-900"
+                                          }`}
                                       >
                                         F{" "}
                                         {isSelected(item, "F") && (
@@ -518,13 +508,12 @@ const ServicesFull = () => {
                                   <button
                                     onClick={() => toggleService(item)}
                                     className={`px-6 py-2 border text-xs tracking-wider uppercase font-bold rounded-full transition-all duration-300 flex items-center gap-2
-                                                                            ${
-                                                                              isSelected(
-                                                                                item,
-                                                                              )
-                                                                                ? "bg-brown-900 text-white border-brown-900"
-                                                                                : "bg-transparent border-brown-900 text-brown-900 hover:bg-brown-900 hover:text-white"
-                                                                            }
+                                                                            ${isSelected(
+                                      item,
+                                    )
+                                        ? "bg-brown-900 text-white border-brown-900"
+                                        : "bg-transparent border-brown-900 text-brown-900 hover:bg-brown-900 hover:text-white"
+                                      }
                                                                         `}
                                   >
                                     {isSelected(item) ? (
