@@ -102,6 +102,20 @@ const ServicesFull = () => {
         setCategoryImages(imageMap);
 
         const structuredData = transformData(servicesRes.data);
+
+        // Sort based on backend category order
+        const sortedCategories = categoriesRes.data;
+        structuredData.sort((a, b) => {
+          const indexA = sortedCategories.findIndex(c => c.name === a.category);
+          const indexB = sortedCategories.findIndex(c => c.name === b.category);
+          // If both found, sort by index
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          // Put defined categories first
+          if (indexA !== -1) return -1;
+          if (indexB !== -1) return 1;
+          return 0;
+        });
+
         setServices(structuredData);
         if (structuredData.length > 0) setActiveCategory(structuredData[0].id);
       } catch (err) {

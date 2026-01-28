@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, X, GripVertical, FolderPlus } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, GripVertical, FolderPlus, Move } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import api from '../../utils/api';
 
@@ -25,6 +25,10 @@ const ServicesManager = () => {
     const [newSubcategory, setNewSubcategory] = useState('');
     const [addingSubcategoryTo, setAddingSubcategoryTo] = useState(null); // categoryId
     const [editingSubcategory, setEditingSubcategory] = useState(null); // { catId: '...', oldName: '...', newName: '...' }
+
+    // Reorder Categories Modal State
+    const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
+    const [reorderedCategories, setReorderedCategories] = useState([]);
 
     const [categoryFormData, setCategoryFormData] = useState({
         name: '',
@@ -98,7 +102,6 @@ const ServicesManager = () => {
             if (!grouped[cat.name]) {
                 grouped[cat.name] = {
                     name: cat.name,
-                    services: [],
                     services: [],
                     image: cat.image,
                     _id: cat._id,
@@ -191,6 +194,9 @@ const ServicesManager = () => {
             console.error('Error deleting service:', error);
         }
     };
+
+    // New state for subcategory creation toggle
+    const [isCreatingSubcategory, setIsCreatingSubcategory] = useState(false);
 
     const handleCategorySubmit = async (e) => {
         e.preventDefault();
@@ -299,8 +305,30 @@ const ServicesManager = () => {
         }
     };
 
+    const handleReorderCategories = async () => {
+        try {
+            await Promise.all(reorderedCategories.map((cat, index) =>
+                api.categories.update(cat._id, { ...cat, order: index })
+            ));
+            setIsReorderModalOpen(false);
+            fetchServices();
+        } catch (error) {
+            console.error('Error reordering categories:', error);
+            alert('Failed to save order');
+        }
+    };
+
     const handleDragEnd = async (result) => {
         if (!result.destination) return;
+
+        // Handle Category Reordering within Modal
+        if (result.source.droppableId === 'reorder-categories') {
+            const items = Array.from(reorderedCategories);
+            const [reorderedItem] = items.splice(result.source.index, 1);
+            items.splice(result.destination.index, 0, reorderedItem);
+            setReorderedCategories(items);
+            return;
+        }
 
         const { source, destination, draggableId } = result;
 
@@ -433,18 +461,21 @@ const ServicesManager = () => {
                 <h2 className="text-3xl font-serif font-bold text-brown-900">Manage Services</h2>
                 <div className="flex gap-3">
                     <button
+                        onClick={() => {
+                            setReorderedCategories(dbCategories);
+                            setIsReorderModalOpen(true);
+                        }}
+                        className="bg-brown-100 text-brown-900 px-6 py-3 rounded-full hover:bg-brown-200 transition-colors flex items-center gap-2"
+                    >
+                        <Move className="h-5 w-5" />
+                        Reorder
+                    </button>
+                    <button
                         onClick={() => openCategoryModal()}
                         className="flex items-center rounded-full bg-brown-600 px-5 py-2.5 text-sm text-white hover:bg-brown-700 transition-all shadow-md"
                     >
                         <FolderPlus className="mr-2 h-4 w-4" />
                         Add Category
-                    </button>
-                    <button
-                        onClick={() => openServiceModal()}
-                        className="flex items-center rounded-full bg-brown-900 px-6 py-3 text-white hover:bg-brown-800 transition-all shadow-lg hover:shadow-xl"
-                    >
-                        <Plus className="mr-2 h-5 w-5" />
-                        Add Service
                     </button>
                 </div>
             </div>
@@ -733,156 +764,146 @@ const ServicesManager = () => {
                 </div>
             </DragDropContext>
 
-            {/* Service Modal */}
+            {/* Service Modal - Minimal Design */}
             {isServiceModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-                    <div className="w-full max-w-2xl rounded-2xl bg-white p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="mb-6 flex items-center justify-between">
-                            <h3 className="text-2xl font-serif font-bold text-brown-900">
-                                {editingService ? 'Edit Service' : 'Add New Service'}
-                            </h3>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-brown-900/40 backdrop-blur-md p-4 transition-all duration-300">
+                    <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden transform transition-all scale-100">
+                        {/* Header */}
+                        <div className="p-6 pb-0 flex justify-between items-start">
+                            <div>
+                                <div className="text-xs font-bold text-brown-500 uppercase tracking-widest mb-1">
+                                    {serviceFormData.category}
+                                </div>
+                                <h3 className="text-2xl font-serif text-brown-900">
+                                    {editingService ? 'Edit Service' : 'New Service'}
+                                </h3>
+                            </div>
                             <button
                                 onClick={() => setIsServiceModalOpen(false)}
-                                className="text-brown-600 hover:text-brown-900 transition-colors"
+                                className="text-brown-400 hover:text-brown-900 transition-colors p-1"
                             >
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleServiceSubmit} className="space-y-5">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div>
-                                    <label className="block text-sm font-medium text-brown-900 mb-2">
-                                        Service Name *
+                        <form onSubmit={handleServiceSubmit} className="p-6 space-y-6">
+                            {/* Primary Fields */}
+                            <div className="space-y-4">
+                                <div className="group relative">
+                                    <label className="absolute -top-2 left-4 bg-white px-1 text-[10px] font-bold uppercase tracking-widest text-brown-500">
+                                        Service Name
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="e.g., French/Ombre Extensions"
-                                        className="w-full rounded-xl border border-brown-200 bg-brown-50/30 p-3 text-brown-900 placeholder-brown-400 focus:border-brown-900 focus:ring-2 focus:ring-brown-900/20 transition-all outline-none"
+                                        placeholder="Service Name"
+                                        className="w-full rounded-xl border border-brown-200 bg-transparent p-3 text-lg font-medium text-brown-900 outline-none focus:border-brown-900 focus:ring-1 focus:ring-brown-900 transition-all placeholder:font-normal placeholder:text-brown-300"
                                         value={serviceFormData.name}
                                         onChange={(e) => setServiceFormData({ ...serviceFormData, name: e.target.value })}
                                         required
+                                        autoFocus
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-brown-900 mb-2">
-                                        Category *
-                                    </label>
-                                    <select
-                                        className="w-full rounded-xl border border-brown-200 bg-brown-50/30 p-3 text-brown-900 focus:border-brown-900 focus:ring-2 focus:ring-brown-900/20 transition-all outline-none"
-                                        value={serviceFormData.category}
-                                        onChange={(e) => setServiceFormData({ ...serviceFormData, category: e.target.value })}
-                                        required
-                                    >
-                                        <option value="">Select a category</option>
-                                        {dbCategories.map(cat => (
-                                            <option key={cat._id} value={cat.name}>{cat.name}</option>
-                                        ))}
-                                    </select>
+                                <div className="flex gap-4">
+                                    <div className="flex-1 group relative">
+                                        <label className="absolute -top-2 left-4 bg-white px-1 text-[10px] font-bold uppercase tracking-widest text-brown-500">
+                                            Male Price
+                                        </label>
+                                        <input
+                                            type="number"
+                                            placeholder="₹"
+                                            className="w-full rounded-xl border border-brown-200 bg-transparent p-3 text-brown-900 outline-none focus:border-brown-900 focus:ring-1 focus:ring-brown-900 transition-all placeholder:text-brown-300"
+                                            value={serviceFormData.prices.male}
+                                            onChange={(e) => setServiceFormData({ ...serviceFormData, prices: { ...serviceFormData.prices, male: e.target.value } })}
+                                        />
+                                    </div>
+                                    <div className="flex-1 group relative">
+                                        <label className="absolute -top-2 left-4 bg-white px-1 text-[10px] font-bold uppercase tracking-widest text-brown-500">
+                                            Female Price
+                                        </label>
+                                        <input
+                                            type="number"
+                                            placeholder="₹"
+                                            className="w-full rounded-xl border border-brown-200 bg-transparent p-3 text-brown-900 outline-none focus:border-brown-900 focus:ring-1 focus:ring-brown-900 transition-all placeholder:text-brown-300"
+                                            value={serviceFormData.prices.female}
+                                            onChange={(e) => setServiceFormData({ ...serviceFormData, prices: { ...serviceFormData.prices, female: e.target.value } })}
+                                        />
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-brown-900 mb-2">
-                                        Subcategory (Optional)
-                                    </label>
-                                    <select
-                                        className="w-full rounded-xl border border-brown-200 bg-brown-50/30 p-3 text-brown-900 focus:border-brown-900 focus:ring-2 focus:ring-brown-900/20 transition-all outline-none"
-                                        value={serviceFormData.subcategory}
-                                        onChange={(e) => setServiceFormData({ ...serviceFormData, subcategory: e.target.value })}
-                                        disabled={!serviceFormData.category}
-                                    >
-                                        <option value="">Select Subcategory</option>
-                                        {serviceFormData.category && dbCategories
-                                            .find(cat => cat.name === serviceFormData.category)
-                                            ?.subcategories?.map((sub, idx) => (
-                                                <option key={idx} value={sub.name}>{sub.name}</option>
-                                            ))
-                                        }
-                                    </select>
-                                </div>
+                                {/* Subcategory Selection with Create Option */}
+                                {serviceFormData.category && (
+                                    <div className="group relative">
+                                        <label className="absolute -top-2 left-4 bg-white px-1 text-[10px] font-bold uppercase tracking-widest text-brown-500">
+                                            Subcategory
+                                        </label>
+                                        <div className="flex gap-2">
+                                            {isCreatingSubcategory ? (
+                                                <input
+                                                    type="text"
+                                                    placeholder="New Subcategory Name"
+                                                    className="w-full rounded-xl border border-brown-200 bg-transparent p-3 text-brown-900 outline-none focus:border-brown-900 focus:ring-1 focus:ring-brown-900"
+                                                    value={serviceFormData.subcategory}
+                                                    onChange={(e) => setServiceFormData({ ...serviceFormData, subcategory: e.target.value })}
+                                                    autoFocus
+                                                />
+                                            ) : (
+                                                <select
+                                                    className="w-full rounded-xl border border-brown-200 bg-transparent p-3 text-brown-900 outline-none focus:border-brown-900 focus:ring-1 focus:ring-brown-900 transition-all appearance-none"
+                                                    value={serviceFormData.subcategory}
+                                                    onChange={(e) => setServiceFormData({ ...serviceFormData, subcategory: e.target.value })}
+                                                >
+                                                    <option value="">No Subcategory</option>
+                                                    {(() => {
+                                                        console.log('Rendering Dropdown. Service Category:', serviceFormData.category);
 
-                                <div>
-                                    <label className="block text-sm font-medium text-brown-900 mb-2">
-                                        Price (Male) - INR
-                                    </label>
-                                    <input
-                                        type="number"
-                                        placeholder="e.g., 500"
-                                        className="w-full rounded-xl border border-brown-200 bg-brown-50/30 p-3 text-brown-900 placeholder-brown-400 focus:border-brown-900 focus:ring-2 focus:ring-brown-900/20 transition-all outline-none"
-                                        value={serviceFormData.prices.male}
-                                        onChange={(e) => setServiceFormData({ ...serviceFormData, prices: { ...serviceFormData.prices, male: e.target.value } })}
-                                    />
-                                </div>
+                                                        // 1. Get explicitly defined subcategories
+                                                        const categoryObj = dbCategories.find(c => c.name?.trim().toLowerCase() === serviceFormData.category?.trim().toLowerCase());
+                                                        const definedSubs = categoryObj?.subcategories?.map(s => (typeof s === 'string' ? s : s.name)) || [];
 
-                                <div>
-                                    <label className="block text-sm font-medium text-brown-900 mb-2">
-                                        Price (Female) - INR
-                                    </label>
-                                    <input
-                                        type="number"
-                                        placeholder="e.g., 600"
-                                        className="w-full rounded-xl border border-brown-200 bg-brown-50/30 p-3 text-brown-900 placeholder-brown-400 focus:border-brown-900 focus:ring-2 focus:ring-brown-900/20 transition-all outline-none"
-                                        value={serviceFormData.prices.female}
-                                        onChange={(e) => setServiceFormData({ ...serviceFormData, prices: { ...serviceFormData.prices, female: e.target.value } })}
-                                    />
-                                </div>
+                                                        // 2. Discover subcategories used by existing services in this category
+                                                        const usedSubs = services
+                                                            .filter(s => s.category === serviceFormData.category && s.subcategory)
+                                                            .map(s => s.subcategory);
+
+                                                        // 3. Merge and Dedupe
+                                                        const allSubs = [...new Set([...definedSubs, ...usedSubs])].sort();
+
+                                                        console.log('Final Available Subcategories:', allSubs);
+
+                                                        if (allSubs.length === 0) {
+                                                            return <option value="" disabled>No subcategories available</option>;
+                                                        }
+
+                                                        return allSubs.map((subName, idx) => (
+                                                            <option key={idx} value={subName}>{subName}</option>
+                                                        ));
+                                                    })()}
+                                                </select>
+                                            )}
+
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsCreatingSubcategory(!isCreatingSubcategory);
+                                                    setServiceFormData({ ...serviceFormData, subcategory: '' });
+                                                }}
+                                                className={`p-3 rounded-xl border transition-all ${isCreatingSubcategory ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-brown-200 text-brown-600 hover:bg-brown-50'}`}
+                                                title={isCreatingSubcategory ? "Cancel" : "Add New Subcategory"}
+                                            >
+                                                {isCreatingSubcategory ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-brown-900 mb-2">
-                                    Description (Optional)
-                                </label>
-                                <textarea
-                                    placeholder="Describe the service..."
-                                    rows="3"
-                                    className="w-full rounded-xl border border-brown-200 bg-brown-50/30 p-3 text-brown-900 placeholder-brown-400 focus:border-brown-900 focus:ring-2 focus:ring-brown-900/20 transition-all outline-none resize-none"
-                                    value={serviceFormData.description}
-                                    onChange={(e) => setServiceFormData({ ...serviceFormData, description: e.target.value })}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-brown-900 mb-2">
-                                    Image URL (Optional)
-                                </label>
-                                <input
-                                    type="url"
-                                    placeholder="https://example.com/image.jpg"
-                                    className="w-full rounded-xl border border-brown-200 bg-brown-50/30 p-3 text-brown-900 placeholder-brown-400 focus:border-brown-900 focus:ring-2 focus:ring-brown-900/20 transition-all outline-none"
-                                    value={serviceFormData.image}
-                                    onChange={(e) => setServiceFormData({ ...serviceFormData, image: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-3 bg-brown-50/50 p-4 rounded-xl">
-                                <input
-                                    type="checkbox"
-                                    id="isActive"
-                                    checked={serviceFormData.isActive}
-                                    onChange={(e) => setServiceFormData({ ...serviceFormData, isActive: e.target.checked })}
-                                    className="w-5 h-5 text-brown-900 border-brown-300 rounded focus:ring-brown-900"
-                                />
-                                <label htmlFor="isActive" className="text-sm font-medium text-brown-900 cursor-pointer">
-                                    Active (Visible on website)
-                                </label>
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsServiceModalOpen(false)}
-                                    className="flex-1 rounded-xl border-2 border-brown-200 bg-white py-3 font-medium text-brown-900 hover:bg-brown-50 transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 rounded-xl bg-brown-900 py-3 font-medium text-white hover:bg-brown-800 transition-all shadow-lg hover:shadow-xl"
-                                >
-                                    {editingService ? 'Update Service' : 'Create Service'}
-                                </button>
-                            </div>
+                            <button
+                                type="submit"
+                                className="w-full rounded-xl bg-brown-900 py-3.5 font-bold tracking-wide text-white shadow-lg transition-all hover:bg-brown-800 hover:shadow-xl active:scale-[0.98]"
+                            >
+                                {editingService ? 'SAVE CHANGES' : 'CREATE SERVICE'}
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -1008,6 +1029,146 @@ const ServicesManager = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* Category Modal - Simplified & Unique Design */}
+            {isCategoryModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-brown-900/40 backdrop-blur-md p-4 transition-all duration-300">
+                    <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden transform transition-all scale-100">
+                        {/* Header */}
+                        <div className="relative h-32 bg-brown-900 flex items-center justify-center overflow-hidden">
+                            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
+                            <button
+                                onClick={() => setIsCategoryModalOpen(false)}
+                                className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors backdrop-blur-sm"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                            <h3 className="relative text-3xl font-serif text-white tracking-wider drop-shadow-md">
+                                {editingCategory ? 'Edit Category' : 'New Category'}
+                            </h3>
+                        </div>
+
+                        {/* Form */}
+                        <form onSubmit={handleCategorySubmit} className="p-8 pt-10 space-y-8">
+                            <div className="space-y-6">
+                                <div className="group relative">
+                                    <label className="absolute -top-2.5 left-4 bg-white px-2 text-xs font-bold uppercase tracking-widest text-brown-500 transition-all group-focus-within:text-brown-900">
+                                        Category Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Hair Services"
+                                        className="w-full rounded-2xl border-2 border-brown-100 bg-transparent p-4 text-lg font-medium text-brown-900 outline-none transition-all placeholder:font-normal placeholder:text-brown-300 hover:border-brown-300 focus:border-brown-900"
+                                        value={categoryFormData.name}
+                                        onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+
+                                {/* Image URL Input */}
+                                <div className="group relative">
+                                    <label className="absolute -top-2.5 left-4 bg-white px-2 text-xs font-bold uppercase tracking-widest text-brown-500 transition-all group-focus-within:text-brown-900">
+                                        Cover Image URL
+                                    </label>
+                                    <input
+                                        type="url"
+                                        placeholder="https://..."
+                                        className="w-full rounded-2xl border-2 border-brown-100 bg-transparent p-4 text-base text-brown-900 outline-none transition-all placeholder:text-brown-300 hover:border-brown-300 focus:border-brown-900"
+                                        value={categoryFormData.image}
+                                        onChange={(e) => setCategoryFormData({ ...categoryFormData, image: e.target.value })}
+                                        required
+                                    />
+                                    {categoryFormData.image && (
+                                        <div className="mt-4 h-32 w-full overflow-hidden rounded-xl border border-brown-100 shadow-inner group relative">
+                                            <img
+                                                src={categoryFormData.image}
+                                                alt="Preview"
+                                                className="h-full w-full object-cover opacity-90"
+                                                onError={(e) => e.target.style.display = 'none'}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setCategoryFormData({ ...categoryFormData, image: '' })}
+                                                className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70 transition-opacity"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="group relative w-full overflow-hidden rounded-2xl bg-brown-900 py-4 text-center font-bold tracking-widest text-white shadow-xl transition-all hover:scale-[1.02] hover:bg-brown-800 hover:shadow-2xl active:scale-95"
+                            >
+                                <span className="relative z-10 flex items-center justify-center gap-2">
+                                    {editingCategory ? 'SAVE CHANGES' : 'CREATE CATEGORY'}
+                                    <Plus className="h-5 w-5 transition-transform group-hover:rotate-90" />
+                                </span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {isReorderModalOpen && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl">
+                        <div className="p-6 border-b border-brown-100 flex justify-between items-center">
+                            <h2 className="text-2xl font-serif text-brown-900">Reorder Categories</h2>
+                            <button
+                                onClick={() => setIsReorderModalOpen(false)}
+                                className="p-2 hover:bg-brown-50 rounded-full transition-colors"
+                            >
+                                <X className="h-6 w-6 text-brown-400" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6">
+                            <DragDropContext onDragEnd={handleDragEnd}>
+                                <Droppable droppableId="reorder-categories">
+                                    {(provided) => (
+                                        <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
+                                            {reorderedCategories.map((cat, index) => (
+                                                <Draggable key={cat._id} draggableId={cat._id} index={index}>
+                                                    {(provided, snapshot) => (
+                                                        <div
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            className={`flex items-center gap-4 p-4 bg-white border border-brown-100 rounded-xl shadow-sm ${snapshot.isDragging ? 'shadow-lg ring-2 ring-brown-900/20' : ''
+                                                                }`}
+                                                        >
+                                                            <div {...provided.dragHandleProps} className="text-brown-300 hover:text-brown-600 cursor-grab active:cursor-grabbing">
+                                                                <GripVertical className="h-5 w-5" />
+                                                            </div>
+                                                            <span className="font-medium text-brown-900">{cat.name}</span>
+                                                        </div>
+                                                    )}
+                                                </Draggable>
+                                            ))}
+                                            {provided.placeholder}
+                                        </div>
+                                    )}
+                                </Droppable>
+                            </DragDropContext>
+                        </div>
+
+                        <div className="p-6 border-t border-brown-100 flex justify-end gap-3 bg-brown-50/50 rounded-b-3xl">
+                            <button
+                                onClick={() => setIsReorderModalOpen(false)}
+                                className="px-6 py-2.5 text-brown-600 font-medium hover:bg-brown-100 rounded-xl transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleReorderCategories}
+                                className="px-6 py-2.5 bg-brown-900 text-white font-medium rounded-xl hover:bg-brown-800 transition-all shadow-lg shadow-brown-900/10"
+                            >
+                                Save Order
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

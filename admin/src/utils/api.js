@@ -84,6 +84,11 @@ export const api = {
     profile: {
         get: () => api.get('/api/admin/profile'),
     },
+
+    // Utilities
+    images: {
+        search: (query) => api.get(`/api/admin/search-images?query=${encodeURIComponent(query)}`),
+    },
 };
 
 export default api;
