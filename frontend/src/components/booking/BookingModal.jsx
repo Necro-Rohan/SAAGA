@@ -134,7 +134,7 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
       return alert("Please enter a valid phone number");
     setIsLoading(true);
     try {
-      await axios.post("http://localhost:5001/api/auth/send-otp", { phone });
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/send-otp`, { phone });
       setStep(3); // Go to OTP
     } catch {
       alert("Failed to send OTP. Try again.");
@@ -148,7 +148,7 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
     setIsLoading(true);
     try {
       const res = await axios.post(
-        "http://localhost:5001/api/auth/verify-otp",
+        `${import.meta.env.VITE_API_BASE_URL}/api/auth/verify-otp`,
         { phone, otp, name },
       );
       login({ ...res.data.user, token: res.data.token });
@@ -168,7 +168,7 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
         variant: "female", // Defaulting to female for now
       }));
       await axios.post(
-        "http://localhost:5001/api/bookings",
+        `${import.meta.env.VITE_API_BASE_URL}/api/bookings`,
         {
           userId: user._id,
           date: selectedDate.toISOString(),
@@ -272,11 +272,10 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
                       onClick={() => setSelectedTime(time)}
                       disabled={!selectedDate}
                       className={`py-2 px-1 rounded-lg text-xs font-medium border transition-all
-                                                ${
-                                                  selectedTime === time
-                                                    ? "bg-brown-900 text-white border-brown-900"
-                                                    : "border-brown-900/10 text-brown-700 hover:border-brown-900/30"
-                                                }
+                                                ${selectedTime === time
+                          ? "bg-brown-900 text-white border-brown-900"
+                          : "border-brown-900/10 text-brown-700 hover:border-brown-900/30"
+                        }
                                                 ${!selectedDate ? "opacity-50 cursor-not-allowed" : ""}
                                             `}
                     >

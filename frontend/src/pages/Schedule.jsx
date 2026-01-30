@@ -16,7 +16,7 @@ const Schedule = () => {
     if (!user) return setLoading(false);
     try {
       const res = await axios.get(
-        "http://localhost:5001/api/bookings/my-bookings",
+        `${import.meta.env.VITE_API_BASE_URL}/api/bookings/my-bookings`,
         {
           headers: { Authorization: `Bearer ${user.token}` },
         },
@@ -97,47 +97,47 @@ const Schedule = () => {
             {appointments.some((a) =>
               ["confirmed", "booked", "pending"].includes(a.status),
             ) && (
-              <div className="space-y-8">
-                <h2 className="text-2xl font-serif text-brown-900 border-b border-brown-900/10 pb-2">
-                  Upcoming Visits
-                </h2>
-                {appointments
-                  .filter((a) =>
-                    ["confirmed", "booked", "pending"].includes(a.status),
-                  )
-                  .map((appt) => (
-                    <AppointmentCard
-                      key={appt._id}
-                      appt={appt}
-                      user={user}
-                      onCancel={async () => {
-                        if (
-                          window.confirm(
-                            "Are you sure you want to cancel this appointment?",
-                          )
-                        ) {
-                          try {
-                            await axios.put(
-                              `http://localhost:5001/api/bookings/${appt._id}/cancel`,
-                              {},
-                              {
-                                headers: {
-                                  Authorization: `Bearer ${user.token}`,
+                <div className="space-y-8">
+                  <h2 className="text-2xl font-serif text-brown-900 border-b border-brown-900/10 pb-2">
+                    Upcoming Visits
+                  </h2>
+                  {appointments
+                    .filter((a) =>
+                      ["confirmed", "booked", "pending"].includes(a.status),
+                    )
+                    .map((appt) => (
+                      <AppointmentCard
+                        key={appt._id}
+                        appt={appt}
+                        user={user}
+                        onCancel={async () => {
+                          if (
+                            window.confirm(
+                              "Are you sure you want to cancel this appointment?",
+                            )
+                          ) {
+                            try {
+                              await axios.put(
+                                `${import.meta.env.VITE_API_BASE_URL}/api/bookings/${appt._id}/cancel`,
+                                {},
+                                {
+                                  headers: {
+                                    Authorization: `Bearer ${user.token}`,
+                                  },
                                 },
-                              },
-                            );
-                            fetchBookings();
-                            fetchActiveBooking();
-                          } catch (err) {
-                            console.error("Failed to cancel", err);
-                            alert("Failed to cancel appointment");
+                              );
+                              fetchBookings();
+                              fetchActiveBooking();
+                            } catch (err) {
+                              console.error("Failed to cancel", err);
+                              alert("Failed to cancel appointment");
+                            }
                           }
-                        }
-                      }}
-                    />
-                  ))}
-              </div>
-            )}
+                        }}
+                      />
+                    ))}
+                </div>
+              )}
 
             {/* Completed Bookings Section */}
             {appointments.some((a) => a.status === "completed") && (
@@ -188,25 +188,23 @@ const AppointmentCard = ({ appt, user, onCancel, isPast }) => {
   return (
     <div className="bg-white rounded-3xl p-8 shadow-xl border border-brown-900/5 animate-fade-in relative overflow-hidden">
       <div
-        className={`absolute top-0 left-0 w-full h-2 ${
-          appt.status === "cancelled"
+        className={`absolute top-0 left-0 w-full h-2 ${appt.status === "cancelled"
             ? "bg-gray-300"
             : appt.status === "completed"
               ? "bg-brown-900"
               : "bg-gradient-to-r from-brown-400 to-brown-900"
-        }`}
+          }`}
       ></div>
 
       <div className="flex flex-col md:flex-row gap-8 justify-between items-start md:items-center mb-8 border-b border-brown-900/10 pb-8">
         <div>
           <span
-            className={`px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase mb-3 inline-block ${
-              appt.status === "confirmed" || appt.status === "booked"
+            className={`px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase mb-3 inline-block ${appt.status === "confirmed" || appt.status === "booked"
                 ? "bg-green-100 text-green-800"
                 : appt.status === "cancelled"
                   ? "bg-red-50 text-red-800"
                   : "bg-gray-100 text-gray-800"
-            }`}
+              }`}
           >
             {appt.status}
           </span>

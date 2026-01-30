@@ -14,7 +14,7 @@ const Shop = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get("http://localhost:5001/api/public/shop");
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/public/shop`);
         setProducts(res.data);
       } catch (err) {
         console.error("Failed to fetch products", err);
@@ -91,11 +91,10 @@ const Shop = () => {
                       </p>
                     </div>
                     <span
-                      className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        product.stock > 0
+                      className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${product.stock > 0
                           ? "bg-brown-50 text-brown-800 border border-brown-100"
                           : "bg-red-50 text-red-800 border border-red-100"
-                      }`}
+                        }`}
                     >
                       {product.stock > 0 ? "In Stock" : "Sold Out"}
                     </span>

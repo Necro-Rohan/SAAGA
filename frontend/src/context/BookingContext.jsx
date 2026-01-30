@@ -26,7 +26,7 @@ export const BookingProvider = ({ children }) => {
 
     try {
       const res = await axios.get(
-        "http://localhost:5001/api/bookings/my-bookings",
+        `${import.meta.env.VITE_API_BASE_URL}/api/bookings/my-bookings`,
         {
           headers: { Authorization: `Bearer ${user.token}` },
         },
