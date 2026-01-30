@@ -13,7 +13,7 @@ const Offers = () => {
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const res = await axios.get("http://localhost:5001/api/public/offers");
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/public/offers`);
         setOffers(res.data);
       } catch (err) {
         console.error(err);

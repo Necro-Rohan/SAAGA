@@ -78,8 +78,8 @@ const ServicesFull = () => {
     const fetchData = async () => {
       try {
         const [servicesRes, categoriesRes] = await Promise.all([
-          axios.get("http://localhost:5001/api/public/services"),
-          axios.get("http://localhost:5001/api/public/categories")
+          axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/public/services`),
+          axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/public/categories`)
         ]);
 
         // Process Categories to create Image Map
