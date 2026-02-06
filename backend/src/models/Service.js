@@ -9,6 +9,7 @@ const serviceSchema = new mongoose.Schema(
       male: { type: Number },
       female: { type: Number },
     },
+    duration: {type: Number, default: 30},
     isActive: { type: Boolean, default: true }, // Soft Delete
   },
   { timestamps: true },
