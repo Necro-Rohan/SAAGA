@@ -1,10 +1,14 @@
-import Service from "../models/Service.js";
-import Product from "../models/Product.js";
-import Staff from "../models/Staff.js";
-import BlockedSlot from "../models/BlockedSlot.js";
-import Appointment from "../models/Appointment.js";
-import Category from "../models/Category.js";
-import User from "../models/User.js";
+import Service from "../models/service.model.js";
+import Product from "../models/product.model.js";
+import Staff from "../models/staff.model.js";
+import BlockedSlot from "../models/blockedSlot.model.js";
+import Appointment from "../models/appointment.model.js";
+import Category from "../models/category.model.js";
+import User from "../models/user.model.js";
+import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
+import Notice from "../models/natice.model.js";
+import axios from "axios";
 
 // --- Services ---
 export const getAllServices = async (req, res) => {
@@ -234,10 +238,7 @@ export const promoteUser = async (req, res) => {
   const { email } = req.body;
 
   // Super Admin Check
-  if (
-    req.user.email !== process.env.SUPER_ADMIN_EMAIL &&
-    req.user.code !== process.env.SUPER_ADMIN_SECRET
-  ) {
+  if (req.user.email !== process.env.SUPER_ADMIN_EMAIL) {
     return res
       .status(403)
       .json({ message: "Only Super Admin can promote users." });
@@ -256,7 +257,41 @@ export const promoteUser = async (req, res) => {
   }
 };
 
-export const adminCreateBooking = async (req, res) => {
+export const demoteUser = async (req, res) => {
+  const { email } = req.body;
+
+  // Super Admin Check (Only Super Admin can demote others)
+  if (req.user.email !== process.env.SUPER_ADMIN_EMAIL) {
+    return res
+      .status(403)
+      .json({ message: "Only Super Admin can demote users." });
+  }
+
+  // Prevent Demoting the Super Admin (Self-Lockout Protection)
+  if (email === process.env.SUPER_ADMIN_EMAIL) {
+    return res
+      .status(400)
+      .json({ message: "You cannot demote the Super Admin." });
+  }
+
+  try {
+    const user = await User.findOneAndUpdate(
+      { email },
+      { role: "user" }, // Reset to basic user
+      { new: true },
+    );
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({
+      success: true,
+      message: `${user.email} has been demoted to User.`,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const createBooking = async (req, res) => {
   const { guestDetails, force, ...bookingData } = req.body;
   // guestDetails = { name: "Rk", phone: "12345" }
   // force = true (Ignore all warnings) or false (Respect schedule)
@@ -342,7 +377,7 @@ export const adminCreateBooking = async (req, res) => {
   }
 };
 
-export const updateBooking = async (req, res) => {
+export const editBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const { staffId, timeSlot, status, staffNotes } = req.body;
@@ -358,6 +393,74 @@ export const updateBooking = async (req, res) => {
       { new: true },
     );
     res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const searchImages = async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) return res.status(400).json({ message: "Query required" });
+
+    const API_KEY =
+      process.env.PIXABAY_KEY || "48527581-807906d4e13cd51520668b201";
+    const url = `https://pixabay.com/api/?key=${API_KEY}&q=${encodeURIComponent(query)}&image_type=photo&per_page=12&orientation=horizontal`;
+
+    const response = await axios.get(url);
+    const data = response.data;
+
+    if (data.hits) {
+      const images = data.hits.map((hit) => hit.webformatURL);
+      res.json({ images });
+    } else {
+      res.json({ images: [] });
+    }
+  } catch (error) {
+    console.error("Image search error:", error);
+    res.status(500).json({ message: "Search failed" });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const userId = req.user._id; // Comes from verifyToken middleware
+    const { name, password } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (name) user.name = name;
+
+    if (password) {
+      user.password = await bcrypt.hash(password, 10);
+    }
+
+    await user.save();
+
+    const updatedUser = user.toObject();
+    delete updatedUser.password;
+
+    res.json({
+      success: true,
+      user: updatedUser,
+      message: "Profile updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// --- Notices ---
+export const createNotice = async (req, res) => {
+  try {
+    const { message, type } = req.body;
+    const notice = await Notice.create({
+      message,
+      type, // "info", "warning", "urgent", "success", "alert"
+      createdBy: req.user._id,
+    });
+    res.status(201).json(notice);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

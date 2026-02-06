@@ -1,5 +1,5 @@
-import Otp from "../models/Otp.js";
-import User from "../models/User.js";
+import Otp from "../models/otp.model.js";
+import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { sendWhatsappOtp } from "../utils/WhatsApp.js";
@@ -9,7 +9,7 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
-// 1. Send OTP (Customer)
+// Send OTP (Customer)
 export const sendOtp = async (req, res) => {
   const { phone } = req.body;
   try {
@@ -33,7 +33,7 @@ export const sendOtp = async (req, res) => {
   }
 };
 
-// 2. Verify OTP & Login (Customer)
+// Verify OTP & Login (Customer)
 export const verifyOtp = async (req, res) => {
   const { phone, otp, name } = req.body;
   try {
@@ -66,7 +66,7 @@ export const verifyOtp = async (req, res) => {
   }
 };
 
-// 3. Admin Login (Email/Pass)
+// Admin/Staff Login (Email/Pass)
 export const portalLogin = async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -102,3 +102,4 @@ export const portalLogin = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+

@@ -1,9 +1,9 @@
-import Appointment from "../models/Appointment.js";
-import BlockedSlot from "../models/BlockedSlot.js";
-import Service from "../models/Service.js";
-import Product from "../models/Product.js";
-import User from "../models/User.js";
-import Staff from "../models/Staff.js";
+import Appointment from "../models/appointment.model.js";
+import BlockedSlot from "../models/blockedSlot.model.js";
+import Service from "../models/service.model.js";
+import Product from "../models/product.model.js";
+import User from "../models/user.model.js";
+import Staff from "../models/staff.model.js";
 import { sendWhatsappOtp } from "../utils/WhatsApp.js"; // We might need a separate template for confirmation
 import mongoose from "mongoose";
 
@@ -28,8 +28,13 @@ export const getSlots = async (req, res) => {
 
   try {
     // Calculate Total Duration
-    const services = await Service.find({_id: { $in: serviceIds.split(",") }}); 
-    const totalDuration = services.reduce((acc, s) => acc + (s.duration || 30),0 );
+    const services = await Service.find({
+      _id: { $in: serviceIds.split(",") },
+    });
+    const totalDuration = services.reduce(
+      (acc, s) => acc + (s.duration || 30),
+      0,
+    );
     const slotsNeeded = Math.ceil(totalDuration / 30);
 
     const allSlots = generateTimeSlots();
@@ -79,7 +84,7 @@ export const getSlots = async (req, res) => {
 // 2. Create Booking
 export const createBooking = async (req, res) => {
   const session = await mongoose.startSession();
-  session.startTransaction()
+  session.startTransaction();
   try {
     const { userId, date, timeSlot, services, products, staffId } = req.body;
 
@@ -96,7 +101,9 @@ export const createBooking = async (req, res) => {
 
       // Finding someone who is NOT in the busy list
       const availableStaff = activeStaff.find(
-        (s) => !busyStaffIds.map((id) => id.toString()).includes(s._id.toString()));
+        (s) =>
+          !busyStaffIds.map((id) => id.toString()).includes(s._id.toString()),
+      );
 
       if (!availableStaff) {
         return res
@@ -104,7 +111,7 @@ export const createBooking = async (req, res) => {
           .json({ message: "No staff available at this time." });
       }
 
-      staffId = availableStaff._id; 
+      staffId = availableStaff._id;
     }
     // Checking if slot still free or not.
     const existing = await Appointment.findOne({
@@ -113,9 +120,9 @@ export const createBooking = async (req, res) => {
       status: { $nin: ["cancelled", "noshow"] },
     });
     if (existing) {
-      return res
-        .status(409)
-        .json({ message: "Slot already booked/Unavailable. Please choose another." });
+      return res.status(409).json({
+        message: "Slot already booked/Unavailable. Please choose another.",
+      });
     }
 
     const blocked = await BlockedSlot.findOne({
@@ -123,27 +130,30 @@ export const createBooking = async (req, res) => {
       timeSlot,
     });
     if (blocked) {
-      return res
-        .status(409)
-        .json({ message: "Slot already booked/Unavailable. Please choose another." });
+      return res.status(409).json({
+        message: "Slot already booked/Unavailable. Please choose another.",
+      });
     }
 
     // Calculate totlal Price (Securely from Backend)
     let totalAmount = 0;
 
     // Services
-    if (services && services.length > 0) {
-      for (const item of services) {
-        const service = await Service.findOne({
-          _id: item.serviceId,
-          isActive: true,
-        });
-        if (!service)
-          throw new Error(`Service not available: ${item.serviceId}`);
+    if (!Array.isArray(services) || services.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Services must be a non-empty array" });
+    }
 
-        totalAmount +=
-          item.variant === "male" ? service.prices.male : service.prices.female;
-      }
+    for (const item of services) {
+      const service = await Service.findOne({
+        _id: item.serviceId,
+        isActive: true,
+      });
+      if (!service) throw new Error(`Service not available: ${item.serviceId}`);
+
+      totalAmount +=
+        item.variant === "male" ? service.prices.male : service.prices.female;
     }
 
     // Products
@@ -153,20 +163,29 @@ export const createBooking = async (req, res) => {
         if (!product) throw new Error(`Product not available: ${prodId}`);
         totalAmount += product.price;
 
-        await Product.findByIdAndUpdate(prodId, { $inc: { stock: -1 } }, {session});
+        await Product.findByIdAndUpdate(
+          prodId,
+          { $inc: { stock: -1 } },
+          { session },
+        );
       }
     }
 
-    const appointment = await Appointment.create([{
-      userId: userId,
-      date: new Date(date),
-      timeSlot,
-      services,
-      products,
-      staff: staffId,
-      totalAmount,
-      status: "confirmed",
-    }], {session});
+    const appointment = await Appointment.create(
+      [
+        {
+          userId: userId,
+          date: new Date(date),
+          timeSlot,
+          services,
+          products,
+          staff: staffId,
+          totalAmount,
+          status: "confirmed",
+        },
+      ],
+      { session },
+    );
 
     try {
       const user = await User.findById(userId);
@@ -180,7 +199,7 @@ export const createBooking = async (req, res) => {
         notifyError.message,
       );
     }
-    await session.commitTransaction()
+    await session.commitTransaction();
     return res.status(201).json({ success: true, appointment });
   } catch (error) {
     console.error("Booking Error:", error);

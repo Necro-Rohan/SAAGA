@@ -1,10 +1,10 @@
 import express from "express";
 import { getSlots } from "../controllers/bookingController.js";
-import Service from "../models/Service.js";
-import Product from "../models/Product.js";
-import Staff from "../models/Staff.js";
-import Offer from "../models/Offer.js";
-import Category from "../models/Category.js";
+import Service from "../models/service.model.js";
+import Product from "../models/product.model.js";
+import Staff from "../models/staff.model.js";
+import Offer from "../models/offer.model.js";
+import Category from "../models/category.model.js";
 
 const router = express.Router();
 
