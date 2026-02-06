@@ -21,7 +21,8 @@ const staffSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
-    isActive: { type: Boolean, default: true }, // Soft Delete
+    isActive: { type: Boolean, default: true }, // For busy Checking
+    isDeleted: { type: Boolean, default: false }, // For soft delete (Admin can reactivate if needed)
   },
   { timestamps: true },
 );

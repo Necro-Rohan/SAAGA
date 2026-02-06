@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { sendWhatsappOtp } from "../utils/WhatsApp.js";
 
-// Helper: Generate Token
+// Generate Token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
@@ -13,14 +13,12 @@ const generateToken = (id) => {
 export const sendOtp = async (req, res) => {
   const { phone } = req.body;
   try {
-    // Generate 4-digit OTP
     const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
 
-    // Save/Update in DB
     await Otp.findOneAndUpdate(
       { phone },
       { code: otpCode, createdAt: Date.now() },
-      { upsert: true }, // Create if doesn't exist
+      { upsert: true }, 
     );
 
     // Trigger WhatsApp API
@@ -49,7 +47,6 @@ export const verifyOtp = async (req, res) => {
     if (!user) {
       user = await User.create({ phone, name, role: "user" });
     } else if (name) {
-      // Optional: Update name if provided and missing? Or always update?
       // Let's update `name` if user doesn't have one, or maybe even if they do (to correct typo).
       user.name = name;
       await user.save();
@@ -79,11 +76,15 @@ export const portalLogin = async (req, res) => {
         .json({ success: false, message: "Unauthorized access" });
     }
 
+    if (user.role === "staff" && user.staffProfile) {
+      if (user.staffProfile.isDeleted) {
+        return res.status(403).json({ message: "Your account has been deactivated. Contact Admin." });
+      }
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
     const token = generateToken(user._id);

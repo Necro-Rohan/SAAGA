@@ -71,25 +71,43 @@ export const updateProduct = async (req, res) => {
   }
 };
 
+export const getAllProducts = async (req, res) => {
+  try {
+    const products = await Product.find().sort({ category: 1, name: 1 });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Soft delete
+    await Product.findByIdAndUpdate(id, { isActive: false });
+    res.json({ message: "Product deleted (archived) successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // --- Staff ---
 export const createStaff = async (req, res) => {
   const { name, role, email, password } = req.body;
 
-  // Start a transaction (Best practice: either both succeed or both fail)
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    // 1. Create the Staff Profile (The "Job" entity)
+    // Create the Staff Profile (The "Job" entity)
     const newStaff = await Staff.create([{ name, role }], { session });
     const staffId = newStaff[0]._id;
 
     let userId = null;
 
-    // 2. If email/password provided, create a User Login (The "Auth" entity)
+    // If email/password provided, create a User Login (The "Auth" entity)
     if (email && password) {
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       const newUser = await User.create(
         [
@@ -123,8 +141,59 @@ export const createStaff = async (req, res) => {
 
 export const getStaff = async (req, res) => {
   try {
-    const staff = await Staff.find({ isActive: true });
+    const staff = await Staff.find({ isDeleted: false });
     res.status(200).json(staff);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const editStaff = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body; // { name, role, specialization, isActive }
+
+    const updatedStaff = await Staff.findByIdAndUpdate(id, updates, {
+      new: true,
+    });
+
+    if (!updatedStaff) {
+      return res.status(404).json({ message: "Staff member not found" });
+    }
+
+    res.json({ success: true, staff: updatedStaff });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteStaff = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Soft delete
+    const staff = await Staff.findByIdAndUpdate(id, { isDeleted: true, isActive: false }, { new: true });
+
+    if (!staff) {
+      return res.status(404).json({ message: "Staff member not found" });
+    }
+
+    res.json({ success: true, message: "Staff member disabled" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getStaffSchedule = async (req, res) => {
+  try {
+    const staffId = req.params.id;
+
+    const appointments = await Appointment.find({ staff: staffId })
+      .populate("userId", "name phone")
+      .populate("services.serviceId", "name duration")
+      .sort({ date: 1, timeSlot: 1 });
+
+    res.json(appointments);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -180,116 +249,6 @@ export const getDashboardStats = async (req, res) => {
 };
 
 // --- Bookings ---
-export const getAllBookings = async (req, res) => {
-  try {
-    const bookings = await Appointment.find()
-      .populate("userId", "phone")
-      .populate({ path: "services.serviceId", select: "name" })
-      .populate("staff", "name")
-      .sort({ date: -1 });
-    res.json(bookings);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// --- Categories ---
-export const getAllCategories = async (req, res) => {
-  try {
-    const categories = await Category.find({ isActive: true }).sort({
-      order: 1,
-    });
-    res.json(categories);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const createCategory = async (req, res) => {
-  try {
-    const category = await Category.create(req.body);
-    res.status(201).json(category);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const updateCategory = async (req, res) => {
-  try {
-    const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-    res.status(200).json(category);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const deleteCategory = async (req, res) => {
-  try {
-    await Category.findByIdAndUpdate(req.params.id, { isActive: false });
-    res.status(200).json({ message: "Category disabled" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const promoteUser = async (req, res) => {
-  const { email } = req.body;
-
-  // Super Admin Check
-  if (req.user.email !== process.env.SUPER_ADMIN_EMAIL) {
-    return res
-      .status(403)
-      .json({ message: "Only Super Admin can promote users." });
-  }
-
-  try {
-    const user = await User.findOneAndUpdate(
-      { email },
-      { role: "admin" },
-      { new: true },
-    );
-    if (!user) return res.status(404).json({ message: "User not found" });
-    res.json({ success: true, message: `${user.email} is now an Admin.` });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const demoteUser = async (req, res) => {
-  const { email } = req.body;
-
-  // Super Admin Check (Only Super Admin can demote others)
-  if (req.user.email !== process.env.SUPER_ADMIN_EMAIL) {
-    return res
-      .status(403)
-      .json({ message: "Only Super Admin can demote users." });
-  }
-
-  // Prevent Demoting the Super Admin (Self-Lockout Protection)
-  if (email === process.env.SUPER_ADMIN_EMAIL) {
-    return res
-      .status(400)
-      .json({ message: "You cannot demote the Super Admin." });
-  }
-
-  try {
-    const user = await User.findOneAndUpdate(
-      { email },
-      { role: "user" }, // Reset to basic user
-      { new: true },
-    );
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    res.json({
-      success: true,
-      message: `${user.email} has been demoted to User.`,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
 
 export const createBooking = async (req, res) => {
   const { guestDetails, force, ...bookingData } = req.body;
@@ -398,6 +357,152 @@ export const editBooking = async (req, res) => {
   }
 };
 
+
+export const getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Appointment.find()
+      .populate("userId", "phone")
+      .populate({ path: "services.serviceId", select: "name" })
+      .populate("staff", "name")
+      .sort({ date: -1 });
+    res.json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const cancelBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    appointment.status = "cancelled";
+    await appointment.save();
+
+    // If appointment had products, put them back in stock
+    if (appointment.products && appointment.products.length > 0) {
+      for (const prodId of appointment.products) {
+        await Product.findByIdAndUpdate(prodId, { $inc: { stock: 1 } });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: "Booking cancelled by Admin",
+      appointment,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// --- Categories ---
+export const getAllCategories = async (req, res) => {
+  try {
+    const categories = await Category.find({ isActive: true }).sort({
+      order: 1,
+    });
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const createCategory = async (req, res) => {
+  try {
+    const category = await Category.create(req.body);
+    res.status(201).json(category);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateCategory = async (req, res) => {
+  try {
+    const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    res.status(200).json(category);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteCategory = async (req, res) => {
+  try {
+    await Category.findByIdAndUpdate(req.params.id, { isActive: false });
+    res.status(200).json({ message: "Category disabled" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// --- User Management ---
+
+export const promoteUser = async (req, res) => {
+  const { email } = req.body;
+
+  // Super Admin Check
+  if (req.user.email !== process.env.SUPER_ADMIN_EMAIL) {
+    return res
+      .status(403)
+      .json({ message: "Only Super Admin can promote users." });
+  }
+
+  try {
+    const user = await User.findOneAndUpdate(
+      { email },
+      { role: "admin" },
+      { new: true },
+    );
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ success: true, message: `${user.email} is now an Admin.` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const demoteUser = async (req, res) => {
+  const { email } = req.body;
+
+  // Super Admin Check (Only Super Admin can demote others)
+  if (req.user.email !== process.env.SUPER_ADMIN_EMAIL) {
+    return res
+      .status(403)
+      .json({ message: "Only Super Admin can demote users." });
+  }
+
+  // Prevent Demoting the Super Admin (Self-Lockout Protection)
+  if (email === process.env.SUPER_ADMIN_EMAIL) {
+    return res
+      .status(400)
+      .json({ message: "You cannot demote the Super Admin." });
+  }
+
+  try {
+    const user = await User.findOneAndUpdate(
+      { email },
+      { role: "user" }, // Reset to basic user
+      { new: true },
+    );
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({
+      success: true,
+      message: `${user.email} has been demoted to User.`,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+// --- Additional Admin Functions ---
+
 export const searchImages = async (req, res) => {
   try {
     const { query } = req.query;
@@ -461,6 +566,43 @@ export const createNotice = async (req, res) => {
       createdBy: req.user._id,
     });
     res.status(201).json(notice);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateNotice = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { message, type, isActive } = req.body;
+
+    const notice = await Notice.findById(id);
+    if (!notice) return res.status(404).json({ message: "Notice not found" });
+
+    if (message) notice.message = message;
+    if (type) notice.type = type;
+    if (isActive !== undefined) notice.isActive = isActive;
+
+    await notice.save();
+    res.json(notice);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+export const getAllNotices = async (req, res) => {
+  try {
+    const notices = await Notice.find().sort({ createdAt: -1 });
+    res.json(notices);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteNotice = async (req, res) => {
+  try {
+    await Notice.findByIdAndDelete(req.params.id);
+    res.json({ message: "Notice removed" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

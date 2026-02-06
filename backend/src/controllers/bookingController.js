@@ -52,7 +52,7 @@ export const getSlots = async (req, res) => {
     if (staffId) {
       eligibleStaff = [staffId];
     } else {
-      const staffMembers = await Staff.find({ isActive: true });
+      const staffMembers = await Staff.find({ isDeleted: false,isActive: true });
       eligibleStaff = staffMembers.map((s) => s._id.toString());
     }
 
@@ -90,7 +90,7 @@ export const createBooking = async (req, res) => {
 
     if (!staffId) {
       // Find a staff member who is active AND free at this time
-      const activeStaff = await Staff.find({ isActive: true });
+      const activeStaff = await Staff.find({ isDeleted: false,isActive: true });
 
       // Get all bookings at this time
       const busyStaffIds = await Appointment.find({

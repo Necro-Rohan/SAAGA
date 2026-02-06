@@ -35,7 +35,7 @@ router.get("/slots", getSlots);
 // 4. Get Active Staff
 router.get("/staff", async (req, res) => {
   try {
-    const staff = await Staff.find({ isActive: true });
+    const staff = await Staff.find({ isActive: true, isDeleted: false }); 
     res.json(staff);
   } catch (error) {
     res.status(500).json({ message: error.message });

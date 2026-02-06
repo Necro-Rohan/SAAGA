@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyToken, verifyAdmin, verifyStaff } from "../middleware/authMiddleware.js";
+import { verifyToken, verifyAdmin} from "../middleware/authMiddleware.js";
 import {
   createService,
   updateService,
@@ -11,7 +11,9 @@ import {
   getAllProducts,
   createStaff,
   getStaff,
-  updateStaff,
+  editStaff,
+  deleteStaff,
+  getStaffSchedule,
   blockSlot,
   unblockSlot,
   getDashboardStats,
@@ -27,6 +29,10 @@ import {
   demoteUser,
   searchImages,
   updateProfile,
+  createNotice,
+  getAllNotices,
+  updateNotice,
+  deleteNotice,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -37,22 +43,30 @@ router.use(verifyToken, verifyAdmin);
 // Dashboard
 router.get("/stats", getDashboardStats);
 
-// Bookings
+// Bookings(Admin control)
 router.get("/bookings", getAllBookings);
+router.post("/bookings", createBooking); // Walk-in / Override
+router.patch("/bookings/:id", editBooking); // Reschedule / Reassign
+router.patch("/bookings/:id/cancel", cancelBooking); // Admin Cancellation
 
 // Services
 router.get("/services", getAllServices);
 router.post("/services", createService);
-router.put("/services/:id", updateService);
+router.patch("/services/:id", updateService);
 router.delete("/services/:id", deleteService); // Soft Delete
 
 // Products
 router.post("/products", createProduct);
-router.put("/products/:id", updateProduct);
+router.patch("/products/:id", updateProduct);
+router.delete("/products/:id", deleteProduct); // Soft Delete
+router.get("/products", getAllProducts);
 
 // Staff
 router.post("/staff", createStaff);
 router.get("/staff", getStaff);
+router.patch("/staff/:id", editStaff); 
+router.delete("/staff/:id", deleteStaff); // Soft Delete
+router.get("/staff/:id/schedule", getStaffSchedule);
 
 // Blocked Slots
 router.post("/blocked-slots", blockSlot);
@@ -61,16 +75,23 @@ router.delete("/blocked-slots/:id", unblockSlot);
 // Categories
 router.get("/categories", getAllCategories);
 router.post("/categories", createCategory);
-router.put("/categories/:id", updateCategory);
+router.patch("/categories/:id", updateCategory);
 router.delete("/categories/:id", deleteCategory);
+
+//user role management
 router.post("/promote-user", promoteUser);
-router.post("/bookings", createBooking); // Walk-in / Override
-router.put("/bookings/:id", editBooking); // Reschedule / Reassign
 router.post("/demote-user", demoteUser);
 
+// Admin Profile
 router.patch("/profile", updateProfile); // Admin Profile Update
 
 // Image Search Proxy (Pixabay)
 router.get("/search-images", searchImages);
+
+// Notices
+router.post("/notices", createNotice);
+router.get("/notices", getAllNotices);
+router.patch("/notices/:id", updateNotice);
+router.delete("/notices/:id", deleteNotice);
 
 export default router;

@@ -1,4 +1,5 @@
 import Appointment from "../models/appointment.model.js";
+import Notice from "../models/natice.model.js";
 
 export const getStaffSchedule = async (req, res) => {
   try {
@@ -11,6 +12,17 @@ export const getStaffSchedule = async (req, res) => {
       .sort({ date: 1, timeSlot: 1 });
 
     res.json(appointments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getActiveNotices = async (req, res) => {
+  try {
+    const notices = await Notice.find({ isActive: true }).sort({
+      createdAt: -1,
+    });
+    res.json(notices);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
