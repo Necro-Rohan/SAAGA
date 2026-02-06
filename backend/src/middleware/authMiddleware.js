@@ -33,3 +33,11 @@ export const verifyAdmin = (req, res, next) => {
     res.status(403).json({ message: "Access denied. Admin only." });
   }
 };
+
+export const verifyStaff = (req, res, next) => {
+  if (req.user && (req.user.role === "admin" || req.user.role === "staff")) {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied. Staff only." });
+  }
+};

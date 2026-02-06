@@ -4,6 +4,7 @@ import Staff from "../models/Staff.js";
 import BlockedSlot from "../models/BlockedSlot.js";
 import Appointment from "../models/Appointment.js";
 import Category from "../models/Category.js";
+import User from "../models/User.js";
 
 // --- Services ---
 export const getAllServices = async (req, res) => {
@@ -185,7 +186,9 @@ export const getAllBookings = async (req, res) => {
 // --- Categories ---
 export const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find({ isActive: true }).sort({ order: 1 });
+    const categories = await Category.find({ isActive: true }).sort({
+      order: 1,
+    });
     res.json(categories);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -218,5 +221,114 @@ export const deleteCategory = async (req, res) => {
     res.status(200).json({ message: "Category disabled" });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const promoteUser = async (req, res) => {
+  const { email } = req.body;
+
+  // Super Admin Check
+  if (req.user.email !== process.env.SUPER_ADMIN_EMAIL && req.user.code !== process.env.SUPER_ADMIN_SECRET) {
+    return res
+      .status(403)
+      .json({ message: "Only Super Admin can promote users." });
+  }
+
+  try {
+    const user = await User.findOneAndUpdate(
+      { email },
+      { role: "admin" },
+      { new: true },
+    );
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ success: true, message: `${user.email} is now an Admin.` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const adminCreateBooking = async (req, res) => {
+  const { guestDetails, force, ...bookingData } = req.body;
+  // guestDetails = { name: "Rk", phone: "12345" }
+  // force = true (Ignore all warnings) or false (Respect schedule)
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    let userId = bookingData.userId;
+
+    // Handle Walk-ins
+    if (!userId && guestDetails) {
+      // Check if user exists by phone, else create
+      let user = await User.findOne({ phone: guestDetails.phone }).session(
+        session,
+      );
+      if (!user) {
+        user = await User.create(
+          [
+            {
+              phone: guestDetails.phone,
+              name: guestDetails.name,
+              role: "user",
+            },
+          ],
+          { session },
+        );
+        user = user[0];
+      }
+      userId = user._id;
+    }
+
+    if (!force) {
+      const { date, timeSlot, staffId } = bookingData;
+
+      //chekcing if the slot is blocked? (Holiday, Break, etc.)
+      const isBlocked = await BlockedSlot.findOne({
+        date: new Date(date),
+        timeSlot: timeSlot,
+        $or: [{ staffId: null }, { staffId: staffId }],
+      }).session(session);
+
+      if (isBlocked) {
+        throw new Error(
+          `Slot is blocked: ${isBlocked.reason}. Use 'Force' to override.`,
+        );
+      }
+
+      // Is the slot already taken by any oteher user?
+      const existingBooking = await Appointment.findOne({
+        date: new Date(date),
+        timeSlot: timeSlot,
+        staff: staffId,
+        status: { $ne: "cancelled" },
+      }).session(session);
+
+      if (existingBooking) {
+        throw new Error("Slot already booked. Use 'Force' to override.");
+      }
+    }
+
+    // Create Booking ,Bypassing checks if "force" flag is true
+    const appointment = await Appointment.create(
+      [
+        {
+          ...bookingData,
+          userId,
+          status: "confirmed", // Auto confirming for Admin
+          paymentStatus: "paid", // Assuming Walk-ins pay at desk
+        },
+      ],
+      { session },
+    );
+
+    await session.commitTransaction();
+    res.json({ success: true, appointment: appointment[0] });
+  } catch (error) {
+    await session.abortTransaction();
+    const status = error.message.includes("Force") ? 409 : 500;
+    res.status(status).json({ message: error.message });
+  } finally {
+    session.endSession();
   }
 };
