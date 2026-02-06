@@ -1,13 +1,12 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
-  phone: { type: String, required: true, unique: true }, // Customer ID
-  role: { type: String, enum: ["user", "admin"], default: "user" },
+  phone: { type: String, required: true, unique: true, sparse: true }, // Customer ID
+  email: { type: String, unique: true, sparse: true }, // for booking notification and staff/admin login
+  password: { type: String }, // Only for Admin/Staff
+  role: { type: String, enum: ["user", "admin", "staff"], default: "user" },
   name: { type: String },
-  // Admin Specifics
-  email: { type: String }, // For Notifications
-  password: { type: String }, 
-  notes: { type: String }, // Internal admin notes
+  staffProfile: {type: mongoose.Schema.Types.ObjectId, ref: "Staff"},
   createdAt: { type: Date, default: Date.now },
 });
 

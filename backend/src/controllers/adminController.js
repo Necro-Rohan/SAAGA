@@ -68,11 +68,51 @@ export const updateProduct = async (req, res) => {
 
 // --- Staff ---
 export const createStaff = async (req, res) => {
+  const { name, role, email, password } = req.body;
+
+  // Start a transaction (Best practice: either both succeed or both fail)
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const staff = await Staff.create(req.body);
-    res.status(201).json(staff);
+    // 1. Create the Staff Profile (The "Job" entity)
+    const newStaff = await Staff.create([{ name, role }], { session });
+    const staffId = newStaff[0]._id;
+
+    let userId = null;
+
+    // 2. If email/password provided, create a User Login (The "Auth" entity)
+    if (email && password) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+
+      const newUser = await User.create(
+        [
+          {
+            name,
+            email,
+            password: hashedPassword,
+            role: "staff", // Grants access to the portal
+            staffProfile: staffId,
+          },
+        ],
+        { session },
+      );
+
+      userId = newUser[0]._id;
+
+      // Link Staff back to User
+      newStaff[0].userId = userId;
+      await newStaff[0].save({ session });
+    }
+
+    await session.commitTransaction();
+    res.status(201).json({ success: true, staff: newStaff[0] });
   } catch (error) {
+    await session.abortTransaction();
     res.status(500).json({ message: error.message });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -180,4 +220,3 @@ export const deleteCategory = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-

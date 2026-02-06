@@ -5,6 +5,7 @@ import Product from "../models/Product.js";
 import User from "../models/User.js";
 import Staff from "../models/Staff.js";
 import { sendWhatsappOtp } from "../utils/WhatsApp.js"; // We might need a separate template for confirmation
+import mongoose from "mongoose";
 
 // Helper: Get Time Slots (10 AM - 8 PM)
 const generateTimeSlots = () => {
@@ -60,7 +61,8 @@ export const getSlots = async (req, res) => {
 // 2. Create Booking
 export const createBooking = async (req, res) => {
   const { userId, date, timeSlot, services, products, staffId } = req.body;
-
+  const session = await mongoose.startSession();
+  session.startTransaction()
   try {
     // A. Concurrency Check (Is slot still free?)
     const existing = await Appointment.findOne({
@@ -135,11 +137,14 @@ export const createBooking = async (req, res) => {
         notifyError.message,
       );
     }
-
-    res.status(201).json({ success: true, appointment });
+    session.commitTransaction()
+    return res.status(201).json({ success: true, appointment });
   } catch (error) {
     console.error("Booking Error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    session.abortTransaction();
+    return res.status(500).json({ success: false, message: error.message });
+  } finally {
+    session.endSession();
   }
 };
 // 3. Get User Bookings

@@ -67,19 +67,18 @@ export const verifyOtp = async (req, res) => {
 };
 
 // 3. Admin Login (Email/Pass)
-export const adminLogin = async (req, res) => {
+export const portalLogin = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).populate("staffProfile");
 
     // Check Email & Role
-    if (!user || user.role !== "admin") {
+    if (!user || !["admin", "staff"].includes(user.role)) {
       return res
         .status(401)
-        .json({ success: false, message: "Invalid admin credentials" });
+        .json({ success: false, message: "Unauthorized access" });
     }
 
-    // Check Password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res
@@ -88,7 +87,17 @@ export const adminLogin = async (req, res) => {
     }
 
     const token = generateToken(user._id);
-    res.status(200).json({ success: true, token, user });
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        staffProfile: user.staffProfile, // Frontend needs this to show "My Schedule" for staffs.
+      },
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
