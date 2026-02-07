@@ -17,8 +17,7 @@ const ShopManager = () => {
     const fetchProducts = async () => {
         try {
             const res = await api.products.getAll();
-            const data = await res.json();
-            setProducts(data);
+            setProducts(res.data);
         } catch (error) {
             console.error('Error fetching products:', error);
         }

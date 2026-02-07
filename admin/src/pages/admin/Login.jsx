@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
+import api from '../../utils/api.js';
 
 const AdminLogin = () => {
     const [email, setEmail] = useState('');
@@ -13,26 +13,14 @@ const AdminLogin = () => {
         setError('');
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/admin/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                // Store both token and user in localStorage
-                localStorage.setItem('adminToken', data.token);
-                localStorage.setItem('adminUser', JSON.stringify(data.user));
-                navigate('/dashboard');
-            } else {
-                setError(data.message || 'Login failed'); // backend sends 'message'
-            }
+            const response = await api.auth.login({ email, password });
+            const { user } = response.data;
+            localStorage.setItem("adminUser", JSON.stringify(user));
+            navigate("/dashboard");
         } catch (err) {
-            setError('Connection error');
+            const errorMessage = err.response?.data?.message || "Login failed. Please try again.";
+            setError(errorMessage);
+            console.error("Login Error:", err);
         }
     };
 

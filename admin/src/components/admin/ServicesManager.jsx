@@ -139,8 +139,8 @@ const ServicesManager = () => {
                 api.categories.getAll()
             ]);
 
-            const servicesData = await servicesRes.json();
-            const categoriesData = await categoriesRes.json();
+            const servicesData = await servicesRes.data;
+            const categoriesData = await categoriesRes.data;
 
             setServices(servicesData);
             setDbCategories(categoriesData);
