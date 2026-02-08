@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { Check, Plus, Loader2 } from "lucide-react";
 import Navbar from "../components/layout/Navbar";
 import BookingModal from "../components/booking/BookingModal";
 import waxImage from "../assets/wax_service.png";
 import facialImage from "../assets/facial_service.png";
+import api from "../../utils/api.js";
 
 import { useNavigate } from "react-router-dom";
 import { useBooking } from "../context/BookingContext";
@@ -78,8 +78,8 @@ const ServicesFull = () => {
     const fetchData = async () => {
       try {
         const [servicesRes, categoriesRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/public/services`),
-          axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/public/categories`)
+          api.public.getServices(),
+          api.public.getCategories()
         ]);
 
         // Process Categories to create Image Map
@@ -177,7 +177,7 @@ const ServicesFull = () => {
     return (
       <div className="min-h-screen bg-cream">
         <div className="fixed top-0 left-0 right-0 z-50 bg-cream">
-          <div className="max-w-[1440px] mx-auto px-6 md:px-10">
+          <div className="max-w-360 mx-auto px-6 md:px-10">
             <Navbar showLogo={true} />
           </div>
         </div>
@@ -191,7 +191,7 @@ const ServicesFull = () => {
   return (
     <div className="min-h-screen bg-cream text-brown-900 font-sans selection:bg-brown-900 selection:text-white pb-0">
       <div className="fixed top-0 left-0 right-0 z-50 bg-cream">
-        <div className="max-w-[1440px] mx-auto px-6 md:px-10">
+        <div className="max-w-360 mx-auto px-6 md:px-10">
           <Navbar
             showLogo={true}
             onOpenBooking={() => {
@@ -215,7 +215,7 @@ const ServicesFull = () => {
       <div
         className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-brown-900/10 p-4 md:p-6 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.1)] transition-transform duration-500 ease-in-out ${selectedServices.length > 0 ? "translate-y-0" : "translate-y-full"}`}
       >
-        <div className="max-w-[1440px] mx-auto flex justify-between items-center gap-4">
+        <div className="max-w-360 mx-auto flex justify-between items-center gap-4">
           <div className="hidden md:block">
             <span className="text-sm font-bold text-brown-900 uppercase tracking-widest block mb-1">
               Your Selection
@@ -254,7 +254,7 @@ const ServicesFull = () => {
         </div>
       </div>
 
-      <main className="max-w-[1440px] mx-auto px-4 md:px-10 flex flex-col md:flex-row gap-12 pt-32 md:pt-36">
+      <main className="max-w-360 mx-auto px-4 md:px-10 flex flex-col md:flex-row gap-12 pt-32 md:pt-36">
         <aside className="hidden md:block w-72 shrink-0">
           <div className="fixed top-32 w-72 max-h-[calc(100vh-140px)] overflow-y-auto scrollbar-hide py-6 pr-4">
             <nav className="flex flex-col gap-1">
@@ -334,7 +334,7 @@ const ServicesFull = () => {
 
                           {item.price && item.price.includes("/") ? (
                             <div
-                              className={`relative overflow-hidden rounded-full border border-brown-900 group/split w-[110px] h-[34px] cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 ${isSelected(item, "M") || isSelected(item, "F")
+                              className={`relative overflow-hidden rounded-full border border-brown-900 group/split w-27.5 h-8.5 cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 ${isSelected(item, "M") || isSelected(item, "F")
                                 ? "bg-brown-900 border-brown-900"
                                 : "bg-transparent border-brown-900 hover:bg-white"
                                 }`}
@@ -440,7 +440,7 @@ const ServicesFull = () => {
                           <h3 className="font-serif text-2xl text-brown-900 inline-block relative pb-3 font-semibold">
                             {sub.title}
                             <span
-                              className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-brown-900 via-brown-900/40 to-transparent rounded-full"
+                              className="absolute bottom-0 left-0 h-1 bg-linear-to-r from-brown-900 via-brown-900/40 to-transparent rounded-full"
                               style={{ width: "130%" }}
                             ></span>
                           </h3>
@@ -463,7 +463,7 @@ const ServicesFull = () => {
 
                                 {item.price && item.price.includes("/") ? (
                                   <div
-                                    className={`relative overflow-hidden rounded-full border border-brown-900 group/split w-[110px] h-[34px] cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 ${isSelected(item, "M") ||
+                                    className={`relative overflow-hidden rounded-full border border-brown-900 group/split w-27.5 h-8.5 cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 ${isSelected(item, "M") ||
                                       isSelected(item, "F")
                                       ? "bg-brown-900 border-brown-900"
                                       : "bg-transparent border-brown-900 hover:bg-white"

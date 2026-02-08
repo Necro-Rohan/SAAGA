@@ -9,21 +9,21 @@ import { Link } from 'react-router-dom';
 const ServiceCard = ({ service, className }) => (
     <Link
         to="/services"
-        className={`relative flex-[1_1_0%] hover:flex-[2_1_0%] transition-[flex] duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group overflow-hidden rounded-[2rem] cursor-pointer min-w-0 ${className}`}
+        className={`relative flex-[1_1_0%] hover:flex-[2_1_0%] transition-[flex] duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] group overflow-hidden rounded-4xl cursor-pointer min-w-0 ${className}`}
     >
 
         {/* Image */}
         <img
             src={service.image}
             alt={service.name}
-            className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-1000 group-hover:scale-110 opacity-90 group-hover:opacity-100 grayscale-[10%] group-hover:grayscale-0"
+            className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-1000 group-hover:scale-110 opacity-90 group-hover:opacity-100 grayscale-10 group-hover:grayscale-0"
         />
 
         {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
 
         {/* Glass Border */}
-        <div className="absolute inset-0 border border-white/10 rounded-[2rem] pointer-events-none"></div>
+        <div className="absolute inset-0 border border-white/10 rounded-4xl pointer-events-none"></div>
 
         {/* Content Container */}
         <div className="absolute inset-0 p-6 flex flex-col justify-between overflow-hidden">
@@ -57,14 +57,14 @@ const ServiceCard = ({ service, className }) => (
 );
 
 const MobileServiceCard = ({ service }) => (
-    <Link to="/services" className="relative group overflow-hidden rounded-[2rem] cursor-pointer flex-shrink-0 w-[85vw] snap-center h-[450px] shadow-xl">
+    <Link to="/services" className="relative group overflow-hidden rounded-4xl cursor-pointer shrink-0 w-[85vw] snap-center h-112.5 shadow-xl">
         <img
             src={service.image}
             alt={service.name}
-            className="w-full h-full object-cover grayscale-[10%]"
+            className="w-full h-full object-cover grayscale-10"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-70"></div>
-        <div className="absolute inset-0 border border-white/10 rounded-[2rem] pointer-events-none"></div>
+        <div className="absolute inset-0 bg-linear-to-t from-black/90 via-transparent to-transparent opacity-70"></div>
+        <div className="absolute inset-0 border border-white/10 rounded-4xl pointer-events-none"></div>
 
         <div className="absolute inset-0 p-8 flex flex-col justify-between">
             <div className="flex justify-between items-start">
@@ -95,7 +95,7 @@ const Services = () => {
 
     return (
         <section id="services" className="relative w-full bg-[#FAF9F6] h-screen flex flex-col justify-center snap-start overflow-hidden">
-            <div className="max-w-[1400px] mx-auto px-4 md:px-8 w-full">
+            <div className="max-w-350 mx-auto px-4 md:px-8 w-full">
 
                 {/* Header - EXACT SAME as Feedback */}
                 <div className="text-center mb-20">

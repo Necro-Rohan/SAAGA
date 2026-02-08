@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api.js";
 import Navbar from "../components/layout/Navbar";
 import BookingModal from "../components/booking/BookingModal";
 import { ShoppingBag, ArrowRight } from "lucide-react";
@@ -14,7 +14,7 @@ const Shop = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/public/shop`);
+        const res = await api.public.getShopProducts();
         setProducts(res.data);
       } catch (err) {
         console.error("Failed to fetch products", err);

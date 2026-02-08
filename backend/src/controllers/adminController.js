@@ -143,7 +143,7 @@ export const createStaff = async (req, res) => {
 
 export const getStaff = async (req, res) => {
   try {
-    const staff = await Staff.find({ isDeleted: false });
+    const staff = await Staff.find({ isDeleted: false }).select("-password");
     res.status(200).json(staff);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -574,7 +574,7 @@ export const updateProfile = async (req, res) => {
       return res.status(400).json({ message: "Phone number must 10 digits long." });
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if (name) user.name = name;
@@ -707,3 +707,14 @@ export const deleteOffer = async (req, res) => {
 //   type: "percentage", 
 //   value: 50, 
 // };
+
+
+// define getallusers route for admin to view all users and their details (except password)
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password").sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

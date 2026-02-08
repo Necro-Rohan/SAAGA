@@ -22,19 +22,26 @@ const generateTimeSlots = () => {
 };
 
 export const getSlots = async (req, res) => {
-  const { date, staffId, serviceIds } = req.query; // serviceIds is comma-separated string, remember
-  if (!date || !serviceIds)
+  let { date, staffId, serviceIds } = req.query; // serviceIds is comma-separated string, remember
+  if (!date)
     return res.status(400).json({ message: "Date and Services required" });
 
   try {
     // Calculate Total Duration
-    const services = await Service.find({
-      _id: { $in: serviceIds.split(",") },
-    });
-    const totalDuration = services.reduce(
-      (acc, s) => acc + (s.duration || 30),
-      0,
-    );
+    let totalDuration = 0;
+
+    if (serviceIds && serviceIds.trim() !== "") {
+        const services = await Service.find({
+          _id: { $in: serviceIds.split(",") },
+        });
+        totalDuration = services.reduce(
+          (acc, s) => acc + (s.duration || 30),
+          0,
+        );
+    }
+
+    if (totalDuration === 0) totalDuration = 30;
+
     const slotsNeeded = Math.ceil(totalDuration / 30);
 
     const allSlots = generateTimeSlots();
@@ -81,12 +88,12 @@ export const getSlots = async (req, res) => {
   }
 };
 
-// 2. Create Booking
+// Create Booking
 export const createBooking = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const { userId, date, timeSlot, services, products, staffId } = req.body;
+    let { userId, date, timeSlot, services, products, staffId } = req.body;
 
     if (!staffId) {
       // Find a staff member who is active AND free at this time
@@ -139,21 +146,22 @@ export const createBooking = async (req, res) => {
     let totalAmount = 0;
 
     // Services
-    if (!Array.isArray(services) || services.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "Services must be a non-empty array" });
-    }
+    // if (!Array.isArray(services) || services.length === 0) {
+    //   return res
+    //     .status(400)
+    //     .json({ message: "Services must be a non-empty array" });
+    // }
+    if (Array.isArray(services) && services.length > 0) {
+      for (const item of services) {
+        const service = await Service.findOne({
+          _id: item.serviceId,
+          isActive: true,
+        });
+        if (!service) throw new Error(`Service not available: ${item.serviceId}`);
 
-    for (const item of services) {
-      const service = await Service.findOne({
-        _id: item.serviceId,
-        isActive: true,
-      });
-      if (!service) throw new Error(`Service not available: ${item.serviceId}`);
-
-      totalAmount +=
-        item.variant === "male" ? service.prices.male : service.prices.female;
+        totalAmount +=
+          item.variant === "male" ? service.prices.male : service.prices.female;
+      }
     }
 
     // Products
@@ -254,8 +262,7 @@ export const cancelBooking = async (req, res) => {
     appointment.status = "cancelled";
     await appointment.save();
 
-    // Optionally: Increase product stock back if products were purchased?
-    // Current logic decreased stock on booking. We should probably increase it back.
+    // Increase product stock back if products were purchased.
     if (appointment.products && appointment.products.length > 0) {
       for (const prodId of appointment.products) {
         await Product.findByIdAndUpdate(prodId, { $inc: { stock: 1 } });

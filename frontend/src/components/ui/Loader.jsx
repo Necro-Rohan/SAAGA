@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion,AnimatePresence } from "framer-motion";
 
-// Import images directly to ensure Vite handles paths correctly
 import hairImg from "../../assets/hair_service.png";
 import blowDryImg from "../../assets/blowout_service.png";
 import nailImg from "../../assets/nail_service.png";
@@ -20,10 +19,9 @@ const Loader = ({ onComplete }) => {
     if (currentIndex < slides.length - 1) {
       const timer = setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
-      }, 800); // Slightly slower for better readability (800ms)
+      }, 800); 
       return () => clearTimeout(timer);
     } else {
-      // End of images, start transition
       const timer = setTimeout(() => {
         setPhase('transition');
       }, 800);
@@ -33,24 +31,23 @@ const Loader = ({ onComplete }) => {
 
   useEffect(() => {
     if (phase === 'transition') {
-      // Wait for shrink animation then show logo text fully
       const timer = setTimeout(() => {
         setPhase('logo');
-      }, 600); // Duration of the shrink
+      }, 600); 
       return () => clearTimeout(timer);
     }
     
     if (phase === 'logo') {
         const timer = setTimeout(() => {
             onComplete();
-        }, 2000); // Reduced to 2s for a snappier feel
+        }, 2000); 
         return () => clearTimeout(timer);
     }
   }, [phase, onComplete]);
 
   return (
     <motion.div 
-      className="fixed inset-0 z-[100] bg-cream flex items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-100 bg-cream flex items-center justify-center overflow-hidden"
       exit={{ y: "-100%" }}
       transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
     >
@@ -73,7 +70,7 @@ const Loader = ({ onComplete }) => {
                   <img
                       src={slides[currentIndex].src}
                       alt={slides[currentIndex].text}
-                      className="absolute w-[85vw] h-[55vh] md:w-auto md:h-[65vh] object-cover md:object-contain max-w-4xl rounded-[2rem] shadow-2xl z-10"
+                      className="absolute w-[85vw] h-[55vh] md:w-auto md:h-[65vh] object-cover md:object-contain max-w-4xl rounded-4xl shadow-2xl z-10"
                       style={{ transformOrigin: "center center" }}
                   />
                   <p className="absolute top-[80vh] md:top-[85vh] text-brown-900 text-xl md:text-2xl font-serif tracking-wide z-10 text-center w-full px-4">
@@ -98,7 +95,7 @@ const Loader = ({ onComplete }) => {
                         scale: 0.2, 
                     }} 
                     transition={{ duration: 0.6, ease: "anticipate" }}
-                    className="absolute w-[85vw] h-[55vh] md:w-auto md:h-[65vh] object-cover md:object-contain max-w-4xl rounded-[2rem] shadow-2xl"
+                    className="absolute w-[85vw] h-[55vh] md:w-auto md:h-[65vh] object-cover md:object-contain max-w-4xl rounded-4xl shadow-2xl"
                 />
             </motion.div>
         )}

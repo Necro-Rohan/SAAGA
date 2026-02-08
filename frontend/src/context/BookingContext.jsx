@@ -1,5 +1,5 @@
+import api from "../../utils/api.js";
 import { createContext, useContext, useState, useEffect } from "react";
-import axios from "axios";
 
 const BookingContext = createContext();
 
@@ -25,25 +25,17 @@ export const BookingProvider = ({ children }) => {
     }
 
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/bookings/my-bookings`,
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        },
-      );
-
-      const bookings = res.data;
+      const res = await api.bookings.getMyBookings();
+      const bookings = Array.isArray(res.data) ? res.data : [];;
 
       const now = new Date();
       now.setHours(0, 0, 0, 0);
 
       const active = bookings.find((b) => {
         const bookingDate = new Date(b.date);
-        const isActiveStatus =
-          b.status !== "cancelled" && b.status !== "completed";
+        const isActiveStatus = b.status !== "cancelled" && b.status !== "completed";
         // Also check if it's in the future or today
         const isFuture = bookingDate >= now;
-
         return isActiveStatus && isFuture;
       });
 
