@@ -9,6 +9,8 @@ import {
   Phone,
   Scissors,
   Shield,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import api from "../../utils/api";
 
@@ -17,6 +19,7 @@ const StaffManager = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -64,6 +67,7 @@ const StaffManager = () => {
   };
 
   const openModal = (staff = null) => {
+    setShowPassword(false); 
     if (staff) {
       setEditingStaff(staff);
       setFormData({
@@ -72,7 +76,7 @@ const StaffManager = () => {
         phone: staff.phone,
         role: staff.role,
         specialization: staff.specialization.join(", "), // Array to String
-        password: "", // Always blank on edit (security)
+        password: "", 
         isActive: staff.isActive,
       });
     } else {
@@ -308,19 +312,28 @@ const StaffManager = () => {
                       <label className="text-xs font-bold uppercase tracking-widest text-brown-500">
                         {editingStaff ? "New Password (Optional)" : "Password"}
                       </label>
-                      <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        placeholder={
-                          editingStaff
-                            ? "Leave blank to keep current"
-                            : "Set login password"
-                        }
-                        className="w-full rounded-xl border border-brown-200 bg-white p-3 text-brown-900 outline-none focus:border-brown-900 transition-all"
-                        required={!editingStaff} // Required only when creating
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          name="password"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          placeholder={
+                            editingStaff
+                              ? "Leave blank to keep current"
+                              : "Set login password"
+                          }
+                          className="w-full rounded-xl border border-brown-200 bg-white p-3 pr-10 text-brown-900 outline-none focus:border-brown-900 transition-all"
+                          required={!editingStaff} 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-3 text-brown-400 hover:text-brown-600 transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -5,7 +5,6 @@ import {
   Package,
   ShoppingBag,
   Tag,
-  Settings,
   LogOut,
   Users,
   ClipboardList,
@@ -78,28 +77,6 @@ const AdminDashboard = () => {
 
   if (!user) return null; // Prevents flickering
 
-//   const getPageTitle = () => {
-//     const path = location.pathname.split("/")[2]; // /dashboard/staff -> staff
-//     if (!path) return "Bookings";
-//     return path.charAt(0).toUpperCase() + path.slice(1);
-//   };
-
-//   const NavButton = ({ to, icon: Icon, label }) => (
-//     <NavLink
-//       to={to}
-//       end={to === "."} // Precise matching for root dashboard path
-//       className={({ isActive }) =>
-//         `flex w-full items-center rounded-xl px-4 py-3.5 text-sm font-medium transition-all duration-300 ${
-//           isActive
-//             ? "bg-brown-900 text-white shadow-lg shadow-brown-900/20 translate-x-1"
-//             : "text-brown-600 hover:bg-brown-100 hover:text-brown-900"
-//         }`
-//       }
-//     >
-//       <Icon className="mr-3 h-5 w-5" />
-//       <span className="tracking-wide">{label}</span>
-//     </NavLink>
-//   );
 
   return (
         <div className="flex h-screen bg-cream selection:bg-brown-900 selection:text-white">
@@ -131,9 +108,6 @@ const AdminDashboard = () => {
                     ))}
                     
                     <div className="my-8 border-t border-brown-100/50"></div>
-                    <NavLink to="settings" className="flex w-full items-center rounded-xl px-4 py-3.5 text-sm font-medium text-brown-600 hover:bg-brown-100">
-                        <Settings className="mr-3 h-5 w-5" /> Settings
-                    </NavLink>
                 </nav>
 
                 <div className="p-4 border-t border-brown-100/50">

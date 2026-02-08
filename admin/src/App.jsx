@@ -7,11 +7,10 @@ import ServicesManager from "./components/admin/ServicesManager";
 import ShopManager from "./components/admin/ShopManager";
 import OffersManager from "./components/admin/OffersManager";
 import StaffManager from "./components/admin/StaffManager";
-import SettingsPanel from "./components/admin/SettingsPanel";
+import NoticesBoard from "./components/common/NoticeBoard";
 
-// import StaffSchedule from "./components/staff/StaffSchedule";
-// import StaffNotices from "./components/staff/StaffNotices";
-// import UserProfile from "./components/common/UserProfile";
+import StaffSchedule from "./components/staff/StaffSchedule";
+import UserProfile from "./components/common/UserProfile";
 
 function App() {
   return (
@@ -27,12 +26,11 @@ function App() {
         <Route path="shop" element={<ShopManager />} />
         <Route path="offers" element={<OffersManager />} />
         <Route path="staff" element={<StaffManager />} />
-        <Route path="settings" element={<SettingsPanel />} />
 
         {/* Staff Routes */}
-        {/* <Route path="my-schedule" element={<StaffSchedule />} /> */}
-        {/* <Route path="notices" element={<StaffNotices />} /> */}
-        {/* <Route path="profile" element={<UserProfile />} /> */}
+        <Route path="my-schedule" element={<StaffSchedule />} />
+        <Route path="notices" element={<NoticesBoard />} />
+        <Route path="profile" element={<UserProfile />} />
       </Route>
     </Routes>
   );

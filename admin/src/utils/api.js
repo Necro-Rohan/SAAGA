@@ -98,6 +98,7 @@ const api = {
     getAll: () => apiClient.get("/api/admin/notices"),
     create: (data) => apiClient.post("/api/admin/notices", data),
     delete: (id) => apiClient.delete(`/api/admin/notices/${id}`),
+    update: (id, data) => apiClient.patch(`/api/admin/notices/${id}`, data)
   },
 
   // Utilities (pixabay image search)

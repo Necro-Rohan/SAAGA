@@ -568,12 +568,17 @@ export const searchImages = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id; // Comes from verifyToken middleware
-    const { name, password } = req.body;
+    const { name, password, phone } = req.body;
+
+    if (phone && (phone.length !== 10 || !/^\d+$/.test(phone))) {
+      return res.status(400).json({ message: "Phone number must 10 digits long." });
+    }
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if (name) user.name = name;
+    if (phone) user.phone = phone;
 
     if (password) {
       user.password = await bcrypt.hash(password, 10);

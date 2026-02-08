@@ -111,6 +111,7 @@ export const portalLogin = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        phone: user.phone,
         staffProfile: user.staffProfile, // Frontend needs this to show "My Schedule" for staffs.
       },
     });
