@@ -37,6 +37,7 @@ import {
   createOffer,
   deleteOffer,
   updateOffer,
+  getAllUsers
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -103,5 +104,8 @@ router.post("/notices", createNotice);
 router.get("/notices", getAllNotices);
 router.patch("/notices/:id", updateNotice);
 router.delete("/notices/:id", deleteNotice);
+
+//all users (for admin purposes)
+router.get("/users", getAllUsers);
 
 export default router;

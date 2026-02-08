@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../utils/api.js";
 import Navbar from "../components/layout/Navbar";
 import BookingModal from "../components/booking/BookingModal";
 import { Gift, Sparkles, ArrowRight } from "lucide-react";
@@ -13,7 +13,7 @@ const Offers = () => {
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/public/offers`);
+        const res = await api.public.getOffers();
         setOffers(res.data);
       } catch (err) {
         console.error(err);

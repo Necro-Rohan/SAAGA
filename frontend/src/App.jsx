@@ -29,7 +29,7 @@ function App() {
   return (
     <>
       <AnimatePresence mode="wait">
-        {loading && <Loader onComplete={() => setLoading(false)} />}
+        {loading && <Loader key="loader" onComplete={() => setLoading(false)} />}
       </AnimatePresence>
       
       <Routes>

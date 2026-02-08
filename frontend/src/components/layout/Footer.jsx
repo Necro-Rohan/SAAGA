@@ -63,7 +63,7 @@ const Footer = () => {
                     </div>
 
                     {/* RIGHT: Map */}
-                    <div className="relative h-[400px] md:h-full min-h-[400px] w-full rounded-3xl overflow-hidden shadow-2xl border border-white/10">
+                    <div className="relative h-100 md:h-full min-h-100 w-full rounded-3xl overflow-hidden shadow-2xl border border-white/10">
                         <iframe
                             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3781.1064217077096!2d73.909476375194!3d18.61428248249748!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2c767757e8213%3A0xf211efeec062e6d3!2sSAAGAA%20SALON!5e0!3m2!1sen!2sin!4v1768939792718!5m2!1sen!2sin"
                             width="100%"

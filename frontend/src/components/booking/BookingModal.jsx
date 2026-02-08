@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../../utils/api.js";
 import {
   X,
   Calendar as CalendarIcon,
@@ -22,6 +22,8 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const [availableSlots, setAvailableSlots] = useState([]);
+
   // Reset when opening
   useEffect(() => {
     if (isOpen) {
@@ -33,9 +35,42 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
     }
   }, [isOpen, user]);
 
+  useEffect(() => {
+    const fetchSlots = async () => {
+      if (!selectedDate ) {
+        setAvailableSlots([]); // Clear slots if conditions aren't met
+        return;
+      }
+      setIsLoading(true);
+      try {
+        // Format Date: YYYY-MM-DD 
+        const dateStr = selectedDate.toLocaleDateString("en-CA");
+
+        const serviceIds = selectedServices.length > 0
+          ? selectedServices.map((s) => s._id || s.id).join(",")
+          : "";
+        console.log(`Fetching slots for: ${dateStr}, Services: ${serviceIds}`);
+
+        const res = await api.public.getSlots(dateStr, serviceIds);
+        if (res.data && Array.isArray(res.data.slots)) {
+          setAvailableSlots(res.data.slots);
+        } else {
+          console.warn("Invalid slot response:", res.data);
+          setAvailableSlots([]);
+        }
+      } catch (error) {
+        console.error("Error fetching slots", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSlots();
+  }, [selectedDate, selectedServices]);
+
   if (!isOpen) return null;
 
-  // --- Calendar Logic (Unchanged) ---
+  // Calendar Logic 
   const getDaysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
@@ -104,37 +139,14 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
     }
   };
 
-  // --- Time Slots ---
-  const timeSlots = [
-    "10:00 AM",
-    "10:30 AM",
-    "11:00 AM",
-    "11:30 AM",
-    "12:00 PM",
-    "12:30 PM",
-    "01:00 PM",
-    "01:30 PM",
-    "02:00 PM",
-    "02:30 PM",
-    "03:00 PM",
-    "03:30 PM",
-    "04:00 PM",
-    "04:30 PM",
-    "05:00 PM",
-    "05:30 PM",
-    "06:00 PM",
-    "06:30 PM",
-    "07:00 PM",
-  ];
-
-  // --- API Handlers ---
+  //API Handlers 
   const handleSendOtp = async () => {
     if (!name.trim()) return alert("Please enter your name");
     if (!phone || phone.length < 10)
       return alert("Please enter a valid phone number");
     setIsLoading(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/send-otp`, { phone });
+      await api.auth.sendOtp(phone);
       setStep(3); // Go to OTP
     } catch {
       alert("Failed to send OTP. Try again.");
@@ -147,10 +159,7 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
     if (!otp) return alert("Enter OTP");
     setIsLoading(true);
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/api/auth/verify-otp`,
-        { phone, otp, name },
-      );
+      const res = await api.auth.verifyOtp(phone, otp, name);
       login({ ...res.data.user, token: res.data.token });
       setStep(4); // Go to Confirm
     } catch {
@@ -163,24 +172,18 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
   const handleConfirmBooking = async () => {
     setIsLoading(true);
     try {
-      const servicesPayload = selectedServices.map((s) => ({
+      const servicesPayload = selectedServices.length > 0 ? selectedServices.map((s) => ({
         serviceId: s._id || s.id,
         variant: "female", // Defaulting to female for now
-      }));
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/api/bookings`,
-        {
-          userId: user._id,
-          date: selectedDate.toISOString(),
-          timeSlot: selectedTime,
-          services: servicesPayload,
-          products: [],
-          staffId: null,
-        },
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        },
-      );
+      })) : [];
+      await api.bookings.create({
+        userId: user._id,
+        date: selectedDate.toISOString(), 
+        timeSlot: selectedTime,
+        services: servicesPayload,
+        products: [],
+        staffId: null,
+      });
 
       alert("Booking Confirmed Successfully!");
       fetchActiveBooking();
@@ -261,28 +264,22 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
               </div>
 
               {/* Time Section */}
-              <div>
-                <h3 className="text-sm font-bold text-brown-900 uppercase tracking-wider flex items-center gap-2 mb-4">
-                  <Clock size={16} /> Select Time
-                </h3>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                  {timeSlots.map((time) => (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                {availableSlots.length > 0 ? (
+                  availableSlots.map((time) => (
                     <button
                       key={time}
                       onClick={() => setSelectedTime(time)}
-                      disabled={!selectedDate}
-                      className={`py-2 px-1 rounded-lg text-xs font-medium border transition-all
-                                                ${selectedTime === time
-                          ? "bg-brown-900 text-white border-brown-900"
-                          : "border-brown-900/10 text-brown-700 hover:border-brown-900/30"
-                        }
-                                                ${!selectedDate ? "opacity-50 cursor-not-allowed" : ""}
-                                            `}
+                      className={`py-2 px-1 rounded-lg text-xs font-medium border transition-all ${selectedTime === time ? "bg-brown-900 text-white" : ""}`}
                     >
                       {time}
                     </button>
-                  ))}
-                </div>
+                  ))
+                ) : (
+                  <p className="col-span-4 text-center text-sm text-gray-400">
+                    No slots available for this date.
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -393,7 +390,7 @@ const BookingModal = ({ isOpen, onClose, selectedServices }) => {
         {step === 1 && (
           <div className="p-6 bg-white border-t border-gray-100">
             <button
-              disabled={!selectedDate || !selectedTime}
+              disabled={!selectedDate}
               onClick={() => {
                 if (user) setStep(4);
                 else setStep(2);

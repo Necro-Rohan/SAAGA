@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import Navbar from "../components/layout/Navbar";
 import BookingModal from "../components/booking/BookingModal";
 import { Calendar, Clock, MapPin, Phone, User, Scissors } from "lucide-react";
-import axios from "axios";
+import api from "../../utils/api.js";
 import { useBooking } from "../context/BookingContext";
-import { Link } from "react-router-dom";
 
 const Schedule = () => {
   const { user, fetchActiveBooking } = useBooking();
@@ -15,12 +14,7 @@ const Schedule = () => {
   const fetchBookings = async () => {
     if (!user) return setLoading(false);
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/bookings/my-bookings`,
-        {
-          headers: { Authorization: `Bearer ${user.token}` },
-        },
-      );
+      const res = await api.bookings.getMyBookings(user.token);
       setAppointments(res.data);
     } catch (err) {
       console.error(err);
@@ -117,15 +111,7 @@ const Schedule = () => {
                             )
                           ) {
                             try {
-                              await axios.put(
-                                `${import.meta.env.VITE_API_BASE_URL}/api/bookings/${appt._id}/cancel`,
-                                {},
-                                {
-                                  headers: {
-                                    Authorization: `Bearer ${user.token}`,
-                                  },
-                                },
-                              );
+                              await api.bookings.cancel(appt._id);
                               fetchBookings();
                               fetchActiveBooking();
                             } catch (err) {
