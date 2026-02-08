@@ -94,14 +94,14 @@ export const deleteProduct = async (req, res) => {
 
 // --- Staff ---
 export const createStaff = async (req, res) => {
-  const { name, role, email, password } = req.body;
+  const { name, role, email, password, phone, specialization } = req.body;
 
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     // Create the Staff Profile (The "Job" entity)
-    const newStaff = await Staff.create([{ name, role }], { session });
+    const newStaff = await Staff.create([{ name, role, phone, specialization, email }], { session });
     const staffId = newStaff[0]._id;
 
     let userId = null;
@@ -115,6 +115,7 @@ export const createStaff = async (req, res) => {
           {
             name,
             email,
+            phone,
             password: hashedPassword,
             role: "staff", // Grants access to the portal
             staffProfile: staffId,
@@ -150,38 +151,74 @@ export const getStaff = async (req, res) => {
 };
 
 export const editStaff = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updates = req.body; // { name, role, specialization, isActive }
+  const { id } = req.params;
+  const updates = req.body; // { name, role, specialization, isActive, phone, email, password }
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
+  try {
     const updatedStaff = await Staff.findByIdAndUpdate(id, updates, {
       new: true,
+      session,
     });
 
     if (!updatedStaff) {
       return res.status(404).json({ message: "Staff member not found" });
     }
 
+    // Sync Basic Info to User Login (Name, Email, Phone)
+    if (updatedStaff.userId) {
+      const userUpdates = {};
+      if (updates.name) userUpdates.name = updates.name;
+      if (updates.email) userUpdates.email = updates.email;
+      if (updates.phone) userUpdates.phone = updates.phone;
+
+      // If Admin sends a new password in the update, hash it and save
+      if (updates.password) {
+        userUpdates.password = await bcrypt.hash(updates.password, 10);
+      }
+
+      if (Object.keys(userUpdates).length > 0) {
+        await User.findByIdAndUpdate(updatedStaff.userId, userUpdates, {
+          session,
+        });
+      }
+    }
+    
+    await session.commitTransaction();
     res.json({ success: true, staff: updatedStaff });
   } catch (error) {
+    await session.abortTransaction();
     res.status(500).json({ message: error.message });
+  } finally {
+    session.endSession();
   }
 };
 
 export const deleteStaff = async (req, res) => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
     // Soft delete
-    const staff = await Staff.findByIdAndUpdate(id, { isDeleted: true, isActive: false }, { new: true });
+    const staff = await Staff.findByIdAndUpdate(id, { isDeleted: true, isActive: false }, { new: true, session });
 
     if (!staff) {
       return res.status(404).json({ message: "Staff member not found" });
     }
-
+    
+    // Also disable staff's user login if exists
+    if (staff.userId) {
+      await User.findByIdAndUpdate(staff.userId, { role: "user" }, { session }); // Downgrade to basic user
+    }
+    session.commitTransaction();
     res.json({ success: true, message: "Staff member disabled" });
   } catch (error) {
+    await session.abortTransaction();
     res.status(500).json({ message: error.message });
+  } finally {
+    session.endSession();
   }
 };
 
