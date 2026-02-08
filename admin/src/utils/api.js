@@ -102,8 +102,14 @@ const api = {
 
   // Utilities (pixabay image search)
   images: {
-    search: (query) =>
-      apiClient.get(`/api/admin/search-images?query=${encodeURIComponent(query)}`),
+    search: (query) => apiClient.get(`/api/admin/search-images?query=${encodeURIComponent(query)}`),
+    },
+  
+  staffPortal: {
+      getProfile: () => apiClient.get('/api/staff/profile'),
+      getSchedule: (date) => apiClient.get(`/api/staff/schedule${date ? `?date=${date}` : ''}`),
+      getNotices: () => apiClient.get('/api/staff/notices'),
+      updateStatus: (id, status) => apiClient.patch(`/api/staff/appointments/${id}/status`, { status })
   },
 };
 
