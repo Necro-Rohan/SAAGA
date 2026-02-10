@@ -4,6 +4,7 @@ export const sendWhatsappOtp = async (to, otpCode) => {
   // DEVELOPMENT BYPASS: If credentials are not set, log OTP and return success
 
   const cleanPhone = to.replace(/\D/g, ""); // Remove non-digits
+  console.log(cleanPhone)
   const formattedPhone = cleanPhone.length === 10 ? "91" + cleanPhone : cleanPhone;
 
   if (
@@ -28,8 +29,8 @@ export const sendWhatsappOtp = async (to, otpCode) => {
         to: formattedPhone,
         type: "template",
         template: {
-          name: "auth_otp", // Remember THIS MATCHES YOUR TEMPLATE NAME IN DASHBOARD, remember to go to Meta WhatsApp Manager website, create a template, and give it a name same as this string.
-          language: { code: "en_US" },
+          name: "request_update", // Remember THIS MATCHES YOUR TEMPLATE NAME IN DASHBOARD, remember to go to Meta WhatsApp Manager website, create a template, and give it a name same as this string.
+          language: { code: "en" },
           components: [
             {
               type: "body",
