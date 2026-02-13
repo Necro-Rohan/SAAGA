@@ -19,7 +19,10 @@ export const BookingProvider = ({ children }) => {
   }, []);
 
   const fetchActiveBooking = async () => {
-    if (!user?._id || !user?.token) {
+    // console.log("Fetching active booking for user:", user);
+    // console.log("User ID:", user._id), console.log("User Token:", user.token);
+    if (!user._id) {
+      // console.log("No user logged in, cannot fetch bookings.");
       setActiveBooking(null);
       return;
     }
@@ -65,13 +68,16 @@ export const BookingProvider = ({ children }) => {
   };
 
   const addToCart = (item, type = "service") => {
-    setCart((prev) => ({
-      ...prev,
-      [type === "service" ? "services" : "products"]: [
-        ...prev[type === "service" ? "services" : "products"],
-        item,
-      ],
-    }));
+    setCart((prev) => {
+      // Prevent duplicates based on ID
+      const list = type === "service" ? prev.services : prev.products;
+      if (list.find(i => (i._id || i.id) === (item._id || item.id))) return prev;
+
+      return {
+        ...prev,
+        [type === "service" ? "services" : "products"]: [...list, item],
+      };
+    });
   };
 
   const removeFromCart = (itemId, type = "service") => {
