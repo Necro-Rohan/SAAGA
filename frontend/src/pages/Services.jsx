@@ -239,7 +239,7 @@ const ServicesFull = () => {
 
           <div className="flex items-center gap-4 w-full md:w-auto">
             <div className="md:hidden flex-1">
-              <span className="text-sm font-bold text-brown-900 block">
+              <span className="text-sm w-30 font-bold text-brown-900 block">
                 {cart.services.length + cart.products.length} Services Selected
               </span>
             </div>
@@ -336,10 +336,13 @@ const ServicesFull = () => {
                         </div>
                         <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
                           <span className="text-xl font-serif text-brown-600">
-                            {item.price ? `₹ ${item.price}` : ""}
+                            {/* {console.log("Item Price:", item.prices)} */}
+                            {(typeof item.prices === "object" && item.prices.male !== item.prices.female)|| (item.price)
+                              ? `₹ ${item.prices?.male} / ₹ ${item.prices.female}`
+                              : `₹ ${item.prices.male}`}
                           </span>
 
-                          {item.price && item.price.includes("/") ? (
+                          {(item.prices && item.prices.male && item.prices.female) || (typeof item.price === "string" && item.price.includes("/")) ? (
                             <div
                               className={`relative overflow-hidden rounded-full border border-brown-900 group/split w-27.5 h-8.5 cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 ${
                                 isSelected(item, "M") || isSelected(item, "F")
@@ -349,37 +352,22 @@ const ServicesFull = () => {
                             >
                               {/* Default Content: 'Add' */}
                               <div
-                                className={`absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] font-bold text-xs uppercase tracking-wider
-                                                                    ${isSelected(item, "M") || isSelected(item, "F") ? "-translate-y-full opacity-0" : "group-hover/split:-translate-y-full group-hover/split:opacity-0 text-brown-900"}
-                                                                `}
+                                className={`absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] font-bold text-xs uppercase tracking-wider ${isSelected(item, "M") || isSelected(item, "F") ? "-translate-y-full opacity-0" : "group-hover/split:-translate-y-full group-hover/split:opacity-0 text-brown-900"}`}
                               >
                                 Add <Plus size={14} className="ml-1" />
                               </div>
 
                               {/* Hover/Selected Content: M | F selection */}
                               <div
-                                className={`absolute inset-0 flex items-center justify-between text-xs font-bold transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]
-                                                                    ${isSelected(item, "M") || isSelected(item, "F") ? "translate-y-0" : "translate-y-full group-hover/split:translate-y-0"}
-                                                                `}
+                                className={`absolute inset-0 flex items-center justify-between text-xs font-bold transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] ${isSelected(item, "M") || isSelected(item, "F") ? "translate-y-0" : "translate-y-full group-hover/split:translate-y-0"}`}
                               >
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    toggleService(
-                                      item,
-                                      "M",
-                                      item.price.split("/")[0].trim(),
-                                    );
+                                    const price = item.prices ? item.prices.male : item.price.split("/")[0].trim();
+                                    toggleService(item, "M", price);
                                   }}
-                                  className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100
-                                                                            ${
-                                                                              isSelected(
-                                                                                item,
-                                                                                "M",
-                                                                              )
-                                                                                ? "bg-brown-900 text-white hover:bg-brown-800"
-                                                                                : "bg-white text-brown-900"
-                                                                            }`}
+                                  className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100 ${isSelected(item, "M") ? "bg-brown-900 text-white hover:bg-brown-800" : "bg-white text-brown-900"}`}
                                 >
                                   M{" "}
                                   {isSelected(item, "M") && (
@@ -390,21 +378,10 @@ const ServicesFull = () => {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    toggleService(
-                                      item,
-                                      "F",
-                                      item.price.split("/")[1]?.trim(),
-                                    );
+                                    const price = item.prices ? item.prices.female : item.price.split("/")[1]?.trim();
+                                    toggleService(item, "F", price);
                                   }}
-                                  className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100
-                                                                            ${
-                                                                              isSelected(
-                                                                                item,
-                                                                                "F",
-                                                                              )
-                                                                                ? "bg-brown-900 text-white hover:bg-brown-800"
-                                                                                : "bg-white text-brown-900"
-                                                                            }`}
+                                  className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100 ${isSelected(item, "F") ? "bg-brown-900 text-white hover:bg-brown-800" : "bg-white text-brown-900"}`}
                                 >
                                   F{" "}
                                   {isSelected(item, "F") && (
@@ -416,15 +393,7 @@ const ServicesFull = () => {
                           ) : (
                             <button
                               onClick={() => toggleService(item)}
-                              className={`px-6 py-2 border text-xs tracking-wider uppercase font-bold rounded-full transition-all duration-300 flex items-center gap-2
-                                                                ${
-                                                                  isSelected(
-                                                                    item,
-                                                                  )
-                                                                    ? "bg-brown-900 text-white border-brown-900"
-                                                                    : "bg-transparent border-brown-900 text-brown-900 hover:bg-brown-900 hover:text-white"
-                                                                }
-                                                            `}
+                              className={`px-6 py-2 border text-xs tracking-wider uppercase font-bold rounded-full transition-all duration-300 flex items-center gap-2 ${isSelected(item) ? "bg-brown-900 text-white border-brown-900" : "bg-transparent border-brown-900 text-brown-900 hover:bg-brown-900 hover:text-white"}`}
                             >
                               {isSelected(item) ? (
                                 <>
@@ -483,18 +452,14 @@ const ServicesFull = () => {
                                   >
                                     {/* Default Content: 'Add' */}
                                     <div
-                                      className={`absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] font-bold text-xs uppercase tracking-wider
-                                                                            ${isSelected(item, "M") || isSelected(item, "F") ? "-translate-y-full opacity-0" : "group-hover/split:-translate-y-full group-hover/split:opacity-0 text-brown-900"}
-                                                                        `}
+                                      className={`absolute inset-0 flex items-center justify-center transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] font-bold text-xs uppercase tracking-wider ${isSelected(item, "M") || isSelected(item, "F") ? "-translate-y-full opacity-0" : "group-hover split:-translate-y-full group-hover/split:opacity-0 text-brown-900"}`}
                                     >
                                       Add <Plus size={14} className="ml-1" />
                                     </div>
 
                                     {/* Hover/Selected Content: M | F selection */}
                                     <div
-                                      className={`absolute inset-0 flex items-center justify-between text-xs font-bold transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]
-                                                                            ${isSelected(item, "M") || isSelected(item, "F") ? "translate-y-0" : "translate-y-full group-hover/split:translate-y-0"}
-                                                                        `}
+                                      className={`absolute inset-0 flex items-center justify-between text-xs font-bold transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] ${isSelected(item, "M") || isSelected(item, "F") ? "translate-y-0" : "translate-y-full group-hover/split:translate-y-0"}`}
                                     >
                                       <button
                                         onClick={(e) => {
@@ -505,15 +470,7 @@ const ServicesFull = () => {
                                             item.price.split("/")[0].trim(),
                                           );
                                         }}
-                                        className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100
-                                                                                    ${
-                                                                                      isSelected(
-                                                                                        item,
-                                                                                        "M",
-                                                                                      )
-                                                                                        ? "bg-brown-900 text-white hover:bg-brown-800"
-                                                                                        : "bg-white text-brown-900"
-                                                                                    }`}
+                                        className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100 ${isSelected(item, "M") ? "bg-brown-900 text-white hover:bg-brown-800" : "bg-white text-brown-900"}`}
                                       >
                                         M{" "}
                                         {isSelected(item, "M") && (
@@ -530,15 +487,7 @@ const ServicesFull = () => {
                                             item.price.split("/")[1]?.trim(),
                                           );
                                         }}
-                                        className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100
-                                                                                    ${
-                                                                                      isSelected(
-                                                                                        item,
-                                                                                        "F",
-                                                                                      )
-                                                                                        ? "bg-brown-900 text-white hover:bg-brown-800"
-                                                                                        : "bg-white text-brown-900"
-                                                                                    }`}
+                                        className={`flex-1 h-full flex items-center justify-center transition-colors hover:bg-brown-100 ${isSelected(item, "F") ? "bg-brown-900 text-white hover:bg-brown-800" : "bg-white text-brown-900"}`}
                                       >
                                         F{" "}
                                         {isSelected(item, "F") && (
@@ -550,15 +499,7 @@ const ServicesFull = () => {
                                 ) : (
                                   <button
                                     onClick={() => toggleService(item)}
-                                    className={`px-6 py-2 border text-xs tracking-wider uppercase font-bold rounded-full transition-all duration-300 flex items-center gap-2
-                                                                            ${
-                                                                              isSelected(
-                                                                                item,
-                                                                              )
-                                                                                ? "bg-brown-900 text-white border-brown-900"
-                                                                                : "bg-transparent border-brown-900 text-brown-900 hover:bg-brown-900 hover:text-white"
-                                                                            }
-                                                                        `}
+                                    className={`px-6 py-2 border text-xs tracking-wider uppercase font-bold rounded-full transition-all duration-300 flex items-center gap-2 ${isSelected(item) ? "bg-brown-900 text-white border-brown-900" : "bg-transparent border-brown-900 text-brown-900 hover:bg-brown-900 hover:text-white"} `}
                                   >
                                     {isSelected(item) ? (
                                       <>
