@@ -1,14 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, GripVertical, FolderPlus, Move, Loader2, RefreshCw, Trash } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import ConfirmModal from '../common/ConfirmModel.jsx';
 import api from '../../utils/api';
 
 const ServicesManager = () => {
     const [services, setServices] = useState([]);
     const [categories, setCategories] = useState([]);
     const [dbCategories, setDbCategories] = useState([]);
+
     const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
+    
+    const [confirmModal, setConfirmModal] = useState({
+      isOpen: false,
+      title: "",
+      message: "",
+      onConfirm: null,
+      isDanger: false,
+    });
+
     const [editingService, setEditingService] = useState(null);
     const [editingCategory, setEditingCategory] = useState(null);
 
@@ -25,11 +37,7 @@ const ServicesManager = () => {
     const [newSubcategory, setNewSubcategory] = useState('');
     const [addingSubcategoryTo, setAddingSubcategoryTo] = useState(null); // categoryId
     const [editingSubcategory, setEditingSubcategory] = useState(null); // { catId: '...', oldName: '...', newName: '...' }
-
     const [loading, setLoading] = useState(true);
-
-    // Reorder Categories Modal State
-    const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
     const [reorderedCategories, setReorderedCategories] = useState([]);
 
     const [categoryFormData, setCategoryFormData] = useState({
@@ -39,8 +47,28 @@ const ServicesManager = () => {
         order: 0
     });
 
+    const [isCreatingSubcategory, setIsCreatingSubcategory] = useState(false);
+
+    const closeConfirmModal = () => {
+        setConfirmModal({ ...confirmModal, isOpen: false });
+    };
+
+    const initiateServiceToggle = (service) => {
+        if (service.isActive) {
+            setConfirmModal({
+                isOpen: true,
+                title: 'Disable Service?',
+                message: `Are you sure you want to disable "${service.name}"? It will be hidden from the public menu.`,
+                isDanger: true,
+                onConfirm: () => handleServiceToggle(service)
+            });
+        } else {
+            handleServiceToggle(service);
+        }
+    };
+
     // Extracted ServiceItem component for reuse
-    const ServiceItem = ({ service, index, openServiceModal, handleServiceToggle, formatPrice }) => (
+    const ServiceItem = ({ service, index, openServiceModal, initiateServiceToggle, formatPrice }) => (
         <Draggable draggableId={service._id} index={index}>
             {(provided, snapshot) => (
                 <div
@@ -85,7 +113,7 @@ const ServicesManager = () => {
                                 <Edit2 className="h-4 w-4" />
                             </button>
                             <button
-                                onClick={() => handleServiceToggle(service)}
+                                onClick={() => initiateServiceToggle(service)}
                                 className={`p-2 rounded-full transition-colors ${
                                     service.isActive 
                                     ? 'text-red-600 hover:bg-red-50' 
@@ -202,47 +230,68 @@ const ServicesManager = () => {
         try {
             if (service.isActive) {
                 // Soft delete (Disable)
-                if (!window.confirm('Are you sure you want to disable this service?')) return;
                 await api.services.delete(service._id);
             } else {
                 // Activate
                 await api.services.update(service._id, { isActive: true });
             }
             fetchServices();
+            closeConfirmModal();
         } catch (error) {
             console.error('Error toggling service:', error);
             alert('Failed to update service status');
         }
     };
 
+    const initiateCategoryToggle = (category) => {
+        if (category.isActive) {
+            setConfirmModal({
+                isOpen: true,
+                title: 'Disable Category?',
+                message: `Are you sure you want to disable "${category.name}"? All services within it will be hidden.`,
+                isDanger: true,
+                onConfirm: () => handleCategoryToggle(category)
+            });
+        } else {
+            handleCategoryToggle(category);
+        }
+    };
+
     const handleCategoryToggle = async (category) => {
         try {
             if (category.isActive) {
-                if (!window.confirm('Disable this category? All services within it will be hidden.')) return;
                 await api.categories.delete(category._id); // Soft delete
             } else {
                 await api.categories.update(category._id, { isActive: true }); // Restore
             }
             fetchServices();
+            closeConfirmModal();
         } catch (error) {
             console.error('Error toggling category:', error);
             alert('Failed to update category status');
         }
     };
 
+    const initiateCategoryDeletePermanent = (categoryId) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Permanently Delete Category?',
+            message: 'This cannot be undone. All services in this category might be deleted or moved to Uncategorized.',
+            isDanger: true,
+            onConfirm: () => handleCategoryDeletePermanent(categoryId)
+        });
+    };
+
     const handleCategoryDeletePermanent = async (categoryId) => {
-        if (!window.confirm('PERMANENTLY DELETE CATEGORY? This cannot be undone and will delete the category structure.')) return;
         try {
             await api.categories.deletePermanent(categoryId);
             fetchServices();
+            closeConfirmModal();
         } catch (error) {
             console.error('Error permanently deleting category:', error);
             alert('Failed to delete category permanently');
         }
     };
-
-    // New state for subcategory creation toggle
-    const [isCreatingSubcategory, setIsCreatingSubcategory] = useState(false);
 
     const handleCategorySubmit = async (e) => {
         e.preventDefault();
@@ -298,9 +347,18 @@ const ServicesManager = () => {
         }
     };
 
-    const handleSubcategoryDelete = async (catId, subName) => {
-        if (!window.confirm(`Delete subcategory "${subName}"? Services will be moved to General.`)) return;
+    const initiateSubcategoryDelete = (catId, subName) => {
+      setConfirmModal({
+        isOpen: true,
+        title: `Delete "${subName}"?`,
+        message: `Warning: All services inside "${subName}" will be DELETED. This cannot be undone.`,
+        isDanger: true,
+        onConfirm: () => handleSubcategoryDelete(catId, subName),
+      });
+    };
 
+    const handleSubcategoryDelete = async (catId, subName) => {
+        
         try {
             const category = categories.find(c => c._id === catId);
             if (!category) return;
@@ -308,16 +366,13 @@ const ServicesManager = () => {
             const updatedSubcategories = category.subcategories.filter(s => s.name !== subName);
             await api.categories.update(catId, { ...category, subcategories: updatedSubcategories });
 
-            // Optional: Standardize services to have empty subcategory if needed, 
-            // but they will automatically fall into "General" (Uncategorized) logic in the UI loop anyway
-            // because `subName` is no longer in `updatedSubcategories`.
-            // Ideally we should clear the string in DB too for consistency.
             const relatedServices = services.filter(s => s.category === category.name && s.subcategory === subName);
             await Promise.all(relatedServices.map(s =>
-                api.services.update(s._id, { subcategory: '' })
+                api.services.delete(s._id)
             ));
 
             fetchServices();
+            closeConfirmModal();
         } catch (error) {
             console.error('Error deleting subcategory:', error);
             alert('Failed to delete subcategory');
@@ -380,10 +435,6 @@ const ServicesManager = () => {
         // Format: "CategoryName" or "CategoryName::SubcategoryName"
         const [sourceCat, sourceSub] = source.droppableId.split('::');
         const [destCat, destSub] = destination.droppableId.split('::');
-
-        // Only allow reordering within the same Category (for now, to simplify)
-        // If we want to allow moving between Categories, that's a bigger change (requires updating service.category)
-        // But moving between Subcategories within the same Category is what we want.
 
         if (sourceCat !== destCat) return;
 
@@ -501,6 +552,15 @@ const ServicesManager = () => {
 
     return (
         <div className="min-h-screen bg-cream">
+            {/* Global Confirm Modal */}
+            <ConfirmModal 
+                isOpen={confirmModal.isOpen}
+                onClose={closeConfirmModal}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                isDanger={confirmModal.isDanger}
+            />
             <div className="mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <h2 className="text-3xl font-serif font-bold text-brown-900">Manage Services</h2>
                 <div className="flex gap-3">
@@ -590,7 +650,7 @@ const ServicesManager = () => {
 
                                                     {/* Toggle: Disable / Restore */}
                                                     <button
-                                                        onClick={() => handleCategoryToggle(category)}
+                                                        onClick={() => initiateCategoryToggle(category)}
                                                         className={`p-3 rounded-full transition-all shadow-lg ${
                                                             category.isActive 
                                                             ? 'bg-white/90 text-red-600 hover:bg-red-50' 
@@ -604,7 +664,7 @@ const ServicesManager = () => {
                                                     {/* Permanent Delete (Only shows when disabled) */}
                                                     {!category.isActive && (
                                                         <button
-                                                            onClick={() => handleCategoryDeletePermanent(category._id)}
+                                                            onClick={() => initiateCategoryDeletePermanent(category._id)}
                                                             className="bg-red-600 text-white p-3 rounded-full hover:bg-red-700 transition-all shadow-lg"
                                                             title="Permanently Delete"
                                                         >
@@ -730,7 +790,7 @@ const ServicesManager = () => {
                                                                                 <Edit2 className="h-4 w-4" />
                                                                             </button>
                                                                             <button
-                                                                                onClick={() => handleSubcategoryDelete(category._id, subName)}
+                                                                                onClick={() => initiateSubcategoryDelete(category._id, subName)}
                                                                                 className="p-2 text-red-400 hover:text-red-600 rounded-full transition-colors"
                                                                                 title="Delete subcategory"
                                                                             >
@@ -759,7 +819,7 @@ const ServicesManager = () => {
                                                                                         service={service}
                                                                                         index={index}
                                                                                         openServiceModal={openServiceModal}
-                                                                                        handleServiceToggle={handleServiceToggle}
+                                                                                        initiateServiceToggle={initiateServiceToggle}
                                                                                         formatPrice={formatPrice}
                                                                                     />
                                                                                 ))}
@@ -810,7 +870,7 @@ const ServicesManager = () => {
                                                                                             service={service}
                                                                                             index={index}
                                                                                             openServiceModal={openServiceModal}
-                                                                                            handleServiceToggle={handleServiceToggle}
+                                                                                            initiateServiceToggle={initiateServiceToggle}
                                                                                             formatPrice={formatPrice}
                                                                                         />
                                                                                     ))}
@@ -939,7 +999,7 @@ const ServicesManager = () => {
                                                 >
                                                     <option value="">No Subcategory</option>
                                                     {(() => {
-                                                        console.log('Rendering Dropdown. Service Category:', serviceFormData.category);
+                                                        {/* console.log('Rendering Dropdown. Service Category:', serviceFormData.category); */}
 
                                                         // 1. Get explicitly defined subcategories
                                                         const categoryObj = dbCategories.find(c => c.name?.trim().toLowerCase() === serviceFormData.category?.trim().toLowerCase());
@@ -953,7 +1013,7 @@ const ServicesManager = () => {
                                                         // 3. Merge and Dedupe
                                                         const allSubs = [...new Set([...definedSubs, ...usedSubs])].sort();
 
-                                                        console.log('Final Available Subcategories:', allSubs);
+                                                        {/* console.log('Final Available Subcategories:', allSubs); */}
 
                                                         if (allSubs.length === 0) {
                                                             return <option value="" disabled>No subcategories available</option>;
@@ -1059,23 +1119,6 @@ const ServicesManager = () => {
                                 </div>
                             </div>
 
-                            {/* <div>
-                                <label className="block text-sm font-medium text-brown-900 mb-2">
-                                    Category Image URL *
-                                </label>
-                                <input
-                                    type="url"
-                                    placeholder="https://images.unsplash.com/photo-.../image.jpg"
-                                    className="w-full rounded-xl border border-brown-200 bg-brown-50/30 p-3 text-brown-900 placeholder-brown-400 focus:border-brown-900 focus:ring-2 focus:ring-brown-900/20 transition-all outline-none"
-                                    value={categoryFormData.image}
-                                    onChange={(e) => setCategoryFormData({ ...categoryFormData, image: e.target.value })}
-                                    required
-                                />
-                                <p className="text-xs text-brown-600 mt-1">
-                                    Use high-quality images from Unsplash or other sources
-                                </p>
-                            </div> */}
-
                             <div className='space-y-4'>
                                 <label className="block text-sm font-medium text-brown-900 mb-2">
                                     Subcategories
@@ -1110,9 +1153,6 @@ const ServicesManager = () => {
                                             </button>
                                         </div>
                                     ))}
-                                    {/* {(!categoryFormData.subcategories || categoryFormData.subcategories.length === 0) && (
-                                        <p className="text-sm text-gray-400 italic">No subcategories added yet</p>
-                                    )} */}
                                 </div>
                             </div>
 
@@ -1147,87 +1187,6 @@ const ServicesManager = () => {
                                     {editingCategory ? 'Update Category' : 'Create Category'}
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-            {/* Category Modal - Simplified & Unique Design */}
-            {isCategoryModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-brown-900/40 backdrop-blur-md p-4 transition-all duration-300">
-                    <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden transform transition-all scale-100">
-                        {/* Header */}
-                        <div className="relative h-32 bg-brown-900 flex items-center justify-center overflow-hidden">
-                            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
-                            <button
-                                onClick={() => setIsCategoryModalOpen(false)}
-                                className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors backdrop-blur-sm"
-                            >
-                                <X className="h-5 w-5" />
-                            </button>
-                            <h3 className="relative text-3xl font-serif text-white tracking-wider drop-shadow-md">
-                                {editingCategory ? 'Edit Category' : 'New Category'}
-                            </h3>
-                        </div>
-
-                        {/* Form */}
-                        <form onSubmit={handleCategorySubmit} className="p-8 pt-10 space-y-8">
-                            <div className="space-y-6">
-                                <div className="group relative">
-                                    <label className="absolute -top-2.5 left-4 bg-white px-2 text-xs font-bold uppercase tracking-widest text-brown-500 transition-all group-focus-within:text-brown-900">
-                                        Category Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Hair Services"
-                                        className="w-full rounded-2xl border-2 border-brown-100 bg-transparent p-4 text-lg font-medium text-brown-900 outline-none transition-all placeholder:font-normal placeholder:text-brown-300 hover:border-brown-300 focus:border-brown-900"
-                                        value={categoryFormData.name}
-                                        onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
-                                        required
-                                    />
-                                </div>
-
-                                {/* Image URL Input */}
-                                <div className="group relative">
-                                    <label className="absolute -top-2.5 left-4 bg-white px-2 text-xs font-bold uppercase tracking-widest text-brown-500 transition-all group-focus-within:text-brown-900">
-                                        Cover Image URL
-                                    </label>
-                                    <input
-                                        type="url"
-                                        placeholder="https://..."
-                                        className="w-full rounded-2xl border-2 border-brown-100 bg-transparent p-4 text-base text-brown-900 outline-none transition-all placeholder:text-brown-300 hover:border-brown-300 focus:border-brown-900"
-                                        value={categoryFormData.image}
-                                        onChange={(e) => setCategoryFormData({ ...categoryFormData, image: e.target.value })}
-                                        required
-                                    />
-                                    {categoryFormData.image && (
-                                        <div className="mt-4 h-32 w-full overflow-hidden rounded-xl border border-brown-100 shadow-inner group relative">
-                                            <img
-                                                src={categoryFormData.image}
-                                                alt="Preview"
-                                                className="h-full w-full object-cover opacity-90"
-                                                onError={(e) => e.target.style.display = 'none'}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setCategoryFormData({ ...categoryFormData, image: '' })}
-                                                className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70 transition-opacity"
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                className="group relative w-full overflow-hidden rounded-2xl bg-brown-900 py-4 text-center font-bold tracking-widest text-white shadow-xl transition-all hover:scale-[1.02] hover:bg-brown-800 hover:shadow-2xl active:scale-95"
-                            >
-                                <span className="relative z-10 flex items-center justify-center gap-2">
-                                    {editingCategory ? 'SAVE CHANGES' : 'CREATE CATEGORY'}
-                                    <Plus className="h-5 w-5 transition-transform group-hover:rotate-90" />
-                                </span>
-                            </button>
                         </form>
                     </div>
                 </div>
