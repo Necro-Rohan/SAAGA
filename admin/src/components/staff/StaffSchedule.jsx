@@ -14,7 +14,7 @@ const StaffSchedule = () => {
     const fetchSchedule = async () => {
         try {
             setLoading(true);
-            const res = await api.myPortal.getSchedule(selectedDate);
+            const res = await api.staffPortal.getSchedule(selectedDate);
             setAppointments(res.data);
         } catch (error) {
             console.error("Error fetching schedule", error);
@@ -26,7 +26,7 @@ const StaffSchedule = () => {
     const handleStatusUpdate = async (id, newStatus) => {
         if (!window.confirm(`Mark this appointment as ${newStatus}?`)) return;
         try {
-            await api.myPortal.updateStatus(id, newStatus);
+            await api.staffPortal.updateStatus(id, newStatus);
             fetchSchedule(); // Refresh list
         } catch (error) {
             console.error("Status update failed", error.response);

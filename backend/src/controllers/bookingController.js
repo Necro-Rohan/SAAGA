@@ -94,7 +94,9 @@ export const createBooking = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    let { userId, date, timeSlot, services, products, staffId, couponCode } = req.body;
+    let { date, timeSlot, services, products, staffId, couponCode } = req.body;
+
+    const userId = req.user.id;
 
     const user = await User.findById(userId);
     if (!user) {

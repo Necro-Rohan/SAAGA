@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, X, GripVertical, FolderPlus, Move, Loader2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, GripVertical, FolderPlus, Move, Loader2, RefreshCw, Trash } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import api from '../../utils/api';
 
@@ -40,14 +40,15 @@ const ServicesManager = () => {
     });
 
     // Extracted ServiceItem component for reuse
-    const ServiceItem = ({ service, index, openServiceModal, handleServiceDelete, formatPrice }) => (
+    const ServiceItem = ({ service, index, openServiceModal, handleServiceToggle, formatPrice }) => (
         <Draggable draggableId={service._id} index={index}>
             {(provided, snapshot) => (
                 <div
                     ref={provided.innerRef}
                     {...provided.draggableProps}
-                    className={`group flex items-center gap-4 py-5 px-2 border-b border-brown-200 hover:bg-brown-50/50 transition-all ${snapshot.isDragging ? 'bg-white shadow-xl ring-2 ring-brown-900/10 rounded-xl border-none' : ''
-                        }`}
+                    className={`group flex items-center gap-4 py-5 px-2 border-b border-brown-200 transition-all ${
+                        !service.isActive ? 'bg-red-50/50 grayscale-[0.5]' : 'hover:bg-brown-50/50'
+                    } ${snapshot.isDragging ? 'bg-white shadow-xl ring-2 ring-brown-900/10 rounded-xl border-none' : ''}`}
                 >
                     <div {...provided.dragHandleProps} className="cursor-grab active:cursor-grabbing text-brown-300 hover:text-brown-500">
                         <GripVertical className="h-4 w-4" />
@@ -55,7 +56,7 @@ const ServicesManager = () => {
 
                     <div className="flex-1">
                         <div className="flex items-center gap-3">
-                            <h4 className="text-lg font-medium text-brown-900">
+                            <h4 className={`text-lg font-medium ${!service.isActive ? 'text-gray-500 line-through' : 'text-brown-900'}`}>
                                 {service.name}
                             </h4>
                             {!service.isActive && (
@@ -79,14 +80,24 @@ const ServicesManager = () => {
                             <button
                                 onClick={() => openServiceModal(service)}
                                 className="p-2 text-brown-600 hover:bg-brown-100 rounded-full transition-colors"
+                                title='Edit Service'
                             >
                                 <Edit2 className="h-4 w-4" />
                             </button>
                             <button
-                                onClick={() => handleServiceDelete(service._id)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                onClick={() => handleServiceToggle(service)}
+                                className={`p-2 rounded-full transition-colors ${
+                                    service.isActive 
+                                    ? 'text-red-600 hover:bg-red-50' 
+                                    : 'text-green-600 hover:bg-green-50'
+                                }`}
+                                title={service.isActive ? "Disable Service" : "Activate Service"}
                             >
-                                <Trash2 className="h-4 w-4" />
+                                {service.isActive ? (
+                                    <Trash2 className="h-4 w-4" />
+                                ) : (
+                                    <RefreshCw className="h-4 w-4" />
+                                )}
                             </button>
                         </div>
                     </div>
@@ -103,12 +114,8 @@ const ServicesManager = () => {
         categoriesFromDb.forEach(cat => {
             if (!grouped[cat.name]) {
                 grouped[cat.name] = {
-                    name: cat.name,
+                    ...cat,
                     services: [],
-                    image: cat.image,
-                    _id: cat._id,
-                    subcategories: cat.subcategories,
-                    order: cat.order
                 };
             }
         });
@@ -121,7 +128,8 @@ const ServicesManager = () => {
                     name: service.category,
                     services: [],
                     image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&q=80',
-                    order: 999
+                    order: 999,
+                    isActive: true
                 };
             }
             grouped[service.category].services.push(service);
@@ -190,13 +198,46 @@ const ServicesManager = () => {
         }
     };
 
-    const handleServiceDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this service?')) return;
+    const handleServiceToggle = async (service) => {
         try {
-            await api.services.delete(id);
+            if (service.isActive) {
+                // Soft delete (Disable)
+                if (!window.confirm('Are you sure you want to disable this service?')) return;
+                await api.services.delete(service._id);
+            } else {
+                // Activate
+                await api.services.update(service._id, { isActive: true });
+            }
             fetchServices();
         } catch (error) {
-            console.error('Error deleting service:', error);
+            console.error('Error toggling service:', error);
+            alert('Failed to update service status');
+        }
+    };
+
+    const handleCategoryToggle = async (category) => {
+        try {
+            if (category.isActive) {
+                if (!window.confirm('Disable this category? All services within it will be hidden.')) return;
+                await api.categories.delete(category._id); // Soft delete
+            } else {
+                await api.categories.update(category._id, { isActive: true }); // Restore
+            }
+            fetchServices();
+        } catch (error) {
+            console.error('Error toggling category:', error);
+            alert('Failed to update category status');
+        }
+    };
+
+    const handleCategoryDeletePermanent = async (categoryId) => {
+        if (!window.confirm('PERMANENTLY DELETE CATEGORY? This cannot be undone and will delete the category structure.')) return;
+        try {
+            await api.categories.deletePermanent(categoryId);
+            fetchServices();
+        } catch (error) {
+            console.error('Error permanently deleting category:', error);
+            alert('Failed to delete category permanently');
         }
     };
 
@@ -212,7 +253,6 @@ const ServicesManager = () => {
                 await api.categories.create(categoryFormData);
             }
             setIsCategoryModalOpen(false);
-            setEditingCategory(null);
             setEditingCategory(null);
             setCategoryFormData({ name: '', image: '', subcategories: [], order: 0 });
             setNewSubcategory('');
@@ -236,12 +276,11 @@ const ServicesManager = () => {
             const category = categories.find(c => c._id === catId);
             if (!category) return;
 
-            // 1. Update Category subcategories list
+            // Update Category subcategories list
             const updatedSubcategories = category.subcategories.map(s =>
                 s.name === oldName ? { ...s, name: newName } : s
             );
 
-            // 2. Prepare API calls
             // Update Category
             await api.categories.update(catId, { ...category, subcategories: updatedSubcategories });
 
@@ -486,7 +525,6 @@ const ServicesManager = () => {
             </div>
 
             {/* Services grouped by category with drag and drop */}
-            {/* Services grouped by category with drag and drop */}
             {loading ? (
                 <div className="flex justify-center items-center py-20">
                     <Loader2 className="h-10 w-10 animate-spin text-brown-900" />
@@ -508,45 +546,80 @@ const ServicesManager = () => {
                                     />
                                     <div className="absolute inset-0 bg-black/40 flex items-center justify-between px-8 backdrop-blur-[2px]">
                                         <div>
-                                            <h3 className="font-serif text-3xl md:text-4xl text-white tracking-wide drop-shadow-lg">
+                                            <h3 className="font-serif text-3xl md:text-4xl text-white tracking-wide drop-shadow-lg flex items-center gap-3">
                                                 {category.name}
+                                                {!category.isActive && (
+                                                    <span className="text-xs bg-red-500/80 text-white px-2 py-1 rounded-full font-sans tracking-normal">
+                                                        Inactive
+                                                    </span>
+                                                )}
                                             </h3>
                                             <p className="text-white/80 text-sm mt-2 drop-shadow">
                                                 {category.services.length} {category.services.length === 1 ? 'service' : 'services'}
                                             </p>
                                         </div>
                                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => openServiceModal(null, category.name)}
-                                                className="bg-white/90 text-brown-900 p-3 rounded-full hover:bg-white transition-all shadow-lg"
-                                                title="Add service to this category"
-                                            >
-                                                <Plus className="h-5 w-5" />
-                                            </button>
-                                            <button
-                                                onClick={() => setAddingSubcategoryTo(category._id)}
-                                                className="bg-white/90 text-brown-900 p-3 rounded-full hover:bg-white transition-all shadow-lg"
-                                                title="Add subcategory"
-                                            >
-                                                <FolderPlus className="h-5 w-5" />
-                                            </button>
+                                            {category.isActive && (
+                                                <>
+                                                    <button
+                                                        onClick={() => openServiceModal(null, category.name)}
+                                                        className="bg-white/90 text-brown-900 p-3 rounded-full hover:bg-white transition-all shadow-lg"
+                                                        title="Add service to this category"
+                                                    >
+                                                        <Plus className="h-5 w-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setAddingSubcategoryTo(category._id)}
+                                                        className="bg-white/90 text-brown-900 p-3 rounded-full hover:bg-white transition-all shadow-lg"
+                                                        title="Add subcategory"
+                                                    >
+                                                        <FolderPlus className="h-5 w-5" />
+                                                    </button>
+                                                </>
+                                            )}
+
                                             {category._id && (
-                                                <button
-                                                    onClick={() => openCategoryModal(category)}
-                                                    className="bg-white/90 text-brown-900 p-3 rounded-full hover:bg-white transition-all shadow-lg"
-                                                    title="Edit category"
-                                                >
-                                                    <Edit2 className="h-5 w-5" />
-                                                </button>
+                                                <>
+                                                    <button
+                                                        onClick={() => openCategoryModal(category)}
+                                                        className="bg-white/90 text-brown-900 p-3 rounded-full hover:bg-white transition-all shadow-lg"
+                                                        title="Edit category"
+                                                    >
+                                                        <Edit2 className="h-5 w-5" />
+                                                    </button>
+
+                                                    {/* Toggle: Disable / Restore */}
+                                                    <button
+                                                        onClick={() => handleCategoryToggle(category)}
+                                                        className={`p-3 rounded-full transition-all shadow-lg ${
+                                                            category.isActive 
+                                                            ? 'bg-white/90 text-red-600 hover:bg-red-50' 
+                                                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                        }`}
+                                                        title={category.isActive ? "Disable Category" : "Restore Category"}
+                                                    >
+                                                        {category.isActive ? <Trash2 className="h-5 w-5" /> : <RefreshCw className="h-5 w-5" />}
+                                                    </button>
+
+                                                    {/* Permanent Delete (Only shows when disabled) */}
+                                                    {!category.isActive && (
+                                                        <button
+                                                            onClick={() => handleCategoryDeletePermanent(category._id)}
+                                                            className="bg-red-600 text-white p-3 rounded-full hover:bg-red-700 transition-all shadow-lg"
+                                                            title="Permanently Delete"
+                                                        >
+                                                            <Trash className="h-5 w-5" />
+                                                        </button>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Category Sub-Groups */}
-                                <div className="space-y-4">
+                                <div className={`space-y-4 ${!category.isActive ? 'pointer-events-none opacity-50' : ''}`}>
                                     {(() => {
-                                        // 1. Group services dynamically
                                         const groups = {};
                                         // Initialize with defined subcategories to ensure order
                                         (category.subcategories || []).forEach(sub => {
@@ -561,7 +634,7 @@ const ServicesManager = () => {
                                             groups[subName].push(service);
                                         });
 
-                                        // 2. Determine display order
+                                        // Determine display order
                                         const definedOrder = (category.subcategories || []).map(s => s.name);
                                         const allGroupNames = Object.keys(groups).filter(name => name !== ''); // Exclude General for now
                                         // Sort: defined ones first (in order), then others alphabetically
@@ -574,7 +647,6 @@ const ServicesManager = () => {
                                             return a.localeCompare(b);
                                         });
 
-                                        // 3. Render Groups
                                         return (
                                             <>
                                                 {/* Add Subcategory Input */}
@@ -687,7 +759,7 @@ const ServicesManager = () => {
                                                                                         service={service}
                                                                                         index={index}
                                                                                         openServiceModal={openServiceModal}
-                                                                                        handleServiceDelete={handleServiceDelete}
+                                                                                        handleServiceToggle={handleServiceToggle}
                                                                                         formatPrice={formatPrice}
                                                                                     />
                                                                                 ))}
@@ -738,7 +810,7 @@ const ServicesManager = () => {
                                                                                             service={service}
                                                                                             index={index}
                                                                                             openServiceModal={openServiceModal}
-                                                                                            handleServiceDelete={handleServiceDelete}
+                                                                                            handleServiceToggle={handleServiceToggle}
                                                                                             formatPrice={formatPrice}
                                                                                         />
                                                                                     ))}
@@ -925,34 +997,69 @@ const ServicesManager = () => {
             {isCategoryModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
                     <div className="w-full max-w-lg rounded-2xl bg-white p-8 shadow-2xl">
-                        <div className="mb-6 flex items-center justify-between">
-                            <h3 className="text-2xl font-serif font-bold text-brown-900">
-                                {editingCategory ? 'Edit Category' : 'Add New Category'}
-                            </h3>
+                        {/* Header */}
+                        <div className="relative h-32 bg-brown-900 flex items-center justify-center overflow-hidden">
+                            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-40 mix-blend-overlay"></div>
                             <button
                                 onClick={() => setIsCategoryModalOpen(false)}
-                                className="text-brown-600 hover:text-brown-900 transition-colors"
+                                className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors backdrop-blur-sm"
                             >
-                                <X className="h-6 w-6" />
+                                <X className="h-5 w-5" />
                             </button>
+                            <h3 className="relative text-3xl font-serif text-white tracking-wider drop-shadow-md">
+                                {editingCategory ? 'Edit Category' : 'New Category'}
+                            </h3>
                         </div>
 
-                        <form onSubmit={handleCategorySubmit} className="space-y-5">
-                            <div>
-                                <label className="block text-sm font-medium text-brown-900 mb-2">
-                                    Category Name *
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g., Nails & Nail Art"
-                                    className="w-full rounded-xl border border-brown-200 bg-brown-50/30 p-3 text-brown-900 placeholder-brown-400 focus:border-brown-900 focus:ring-2 focus:ring-brown-900/20 transition-all outline-none"
-                                    value={categoryFormData.name}
-                                    onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
-                                    required
-                                />
+                        <form onSubmit={handleCategorySubmit} className="p-8 pt-10 space-y-8">
+                            <div className='space-y-6'>
+                                <div className="group relative">
+                                    <label className="absolute -top-2.5 left-4 bg-white px-2 text-xs font-bold uppercase tracking-widest text-brown-500 transition-all group-focus-within:text-brown-900">
+                                        Category Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Hair Services"
+                                        className="w-full rounded-2xl border-2 border-brown-100 bg-transparent p-4 text-lg font-medium text-brown-900 outline-none transition-all placeholder:font-normal placeholder:text-brown-300 hover:border-brown-300 focus:border-brown-900"
+                                        value={categoryFormData.name}
+                                        onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                {/* Image URL Input */}
+                                <div className="group relative">
+                                    <label className="absolute -top-2.5 left-4 bg-white px-2 text-xs font-bold uppercase tracking-widest text-brown-500 transition-all group-focus-within:text-brown-900">
+                                        Cover Image URL
+                                    </label>
+                                    <input
+                                        type="url"
+                                        placeholder="https://..."
+                                        className="w-full rounded-2xl border-2 border-brown-100 bg-transparent p-4 text-base text-brown-900 outline-none transition-all placeholder:text-brown-300 hover:border-brown-300 focus:border-brown-900"
+                                        value={categoryFormData.image}
+                                        onChange={(e) => setCategoryFormData({ ...categoryFormData, image: e.target.value })}
+                                        required
+                                    />
+                                    {categoryFormData.image && (
+                                        <div className="mt-4 h-32 w-full overflow-hidden rounded-xl border border-brown-100 shadow-inner group relative">
+                                            <img
+                                                src={categoryFormData.image}
+                                                alt="Preview"
+                                                className="h-full w-full object-cover opacity-90"
+                                                onError={(e) => e.target.style.display = 'none'}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setCategoryFormData({ ...categoryFormData, image: '' })}
+                                                className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/70 transition-opacity"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
-                            <div>
+                            {/* <div>
                                 <label className="block text-sm font-medium text-brown-900 mb-2">
                                     Category Image URL *
                                 </label>
@@ -967,9 +1074,9 @@ const ServicesManager = () => {
                                 <p className="text-xs text-brown-600 mt-1">
                                     Use high-quality images from Unsplash or other sources
                                 </p>
-                            </div>
+                            </div> */}
 
-                            <div>
+                            <div className='space-y-4'>
                                 <label className="block text-sm font-medium text-brown-900 mb-2">
                                     Subcategories
                                 </label>
@@ -1003,9 +1110,9 @@ const ServicesManager = () => {
                                             </button>
                                         </div>
                                     ))}
-                                    {(!categoryFormData.subcategories || categoryFormData.subcategories.length === 0) && (
+                                    {/* {(!categoryFormData.subcategories || categoryFormData.subcategories.length === 0) && (
                                         <p className="text-sm text-gray-400 italic">No subcategories added yet</p>
-                                    )}
+                                    )} */}
                                 </div>
                             </div>
 
