@@ -11,6 +11,32 @@ import Notice from "../models/natice.model.js";
 import axios from "axios";
 import Offer from "../models/offer.model.js";
 
+const updateNoShows = async () => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const candidates = await Appointment.find({
+      status: { $in: ["confirmed", "pending", "booked"] },
+    });
+
+    const expiredIds = candidates
+      .filter((appt) => {
+        const apptDate = new Date(appt.date);
+        return apptDate < today;
+      })
+      .map((appt) => appt._id);
+
+    if (expiredIds.length > 0) {
+      const result = await Appointment.updateMany(
+        { _id: { $in: expiredIds } },
+        { $set: { status: "noshow" } },
+      );
+    }
+  } catch (error) {
+    console.error("Error updating no-shows:", error);
+  }
+};
 // --- Services ---
 export const getAllServices = async (req, res) => {
   try {
@@ -44,8 +70,11 @@ export const updateService = async (req, res) => {
 export const deleteService = async (req, res) => {
   try {
     // Soft Delete
-    await Service.findByIdAndUpdate(req.params.id, { isActive: false });
-    res.status(200).json({ message: "Service disabled" });
+    const updatedService = await Service.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
+    if (!updatedService) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+    res.status(200).json({ message: "Service disabled", service: updatedService });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -265,7 +294,10 @@ export const unblockSlot = async (req, res) => {
 
 // --- Dashboard Stats ---
 export const getDashboardStats = async (req, res) => {
+
   try {
+    await updateNoShows();
+
     const totalBookings = await Appointment.countDocuments();
     const todayBookings = await Appointment.countDocuments({
       date: {
@@ -395,11 +427,12 @@ export const editBooking = async (req, res) => {
   }
 };
 
-
 export const getAllBookings = async (req, res) => {
   try {
+    await updateNoShows(); // Ensuring no-shows are updated before fetching
+
     const bookings = await Appointment.find()
-      .populate("userId", "phone")
+      .populate("userId", "name phone")
       .populate({ path: "services.serviceId", select: "name" })
       .populate("staff", "name")
       .sort({ date: -1 });
@@ -441,7 +474,7 @@ export const cancelBooking = async (req, res) => {
 // --- Categories ---
 export const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find({ isActive: true }).sort({
+    const categories = await Category.find({ }).sort({
       order: 1,
     });
     res.json(categories);
@@ -472,8 +505,22 @@ export const updateCategory = async (req, res) => {
 
 export const deleteCategory = async (req, res) => {
   try {
-    await Category.findByIdAndUpdate(req.params.id, { isActive: false });
-    res.status(200).json({ message: "Category disabled" });
+    const category = await Category.findByIdAndUpdate(req.params.id, { isActive: false }, {new: true});
+    if (!category) return res.status(404).json({ message: "Category not found" });
+    res.status(200).json({ message: "Category disabled", category });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deletePermanentCategory = async (req, res) => {
+  try {
+    const category = await Category.findByIdAndDelete(req.params.id);
+    if (!category)
+      return res.status(404).json({ message: "Category not found" });
+
+    await Service.deleteMany({ category: category.name });
+    res.status(200).json({ message: "Category permanently deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

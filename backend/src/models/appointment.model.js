@@ -14,7 +14,7 @@ const appointmentSchema = new mongoose.Schema({
   ],
   products: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
   staff: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
-  date: { type: Date, required: true }, // Format: YYYY-MM-DD
+  date: { type: Date, required: true }, 
   timeSlot: { type: String, required: true }, // Format: "10:00 AM"
   totalAmount: { type: Number, required: true }, // Server-Calculated
   paymentStatus: {type: String, enum: ["pending", "paid", "refunded"], default: "pending"},

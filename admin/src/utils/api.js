@@ -84,6 +84,7 @@ const api = {
     create: (data) => apiClient.post("/api/admin/categories", data),
     update: (id, data) => apiClient.patch(`/api/admin/categories/${id}`, data),
     delete: (id) => apiClient.delete(`/api/admin/categories/${id}`),
+    deletePermanent: (id) => apiClient.delete(`/api/admin/categories/${id}/permanent`),
   },
 
   // User & Profile & notices

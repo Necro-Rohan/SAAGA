@@ -9,7 +9,7 @@ const StaffNotices = () => {
     useEffect(() => {
         const fetchNotices = async () => {
             try {
-                const res = await api.myPortal.getNotices();
+                const res = await api.staffPortal.getNotices();
                 setNotices(res.data);
             } catch (error) {
                 console.error("Error fetching notices", error);

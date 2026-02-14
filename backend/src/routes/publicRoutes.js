@@ -11,8 +11,12 @@ const router = express.Router();
 // 1. Get All Services (Active)
 router.get("/services", async (req, res) => {
   try {
-    const services = await Service.find({ isActive: true });
-    // Optional: Grouping logic could be here or frontend
+    const activeCategories = await Category.find({ isActive: true }).select("name");
+    const activeCategoryNames = activeCategories.map((cat) => cat.name);
+    const services = await Service.find({
+      isActive: true,
+      category: { $in: activeCategoryNames }
+    });
     res.json(services);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -55,7 +59,7 @@ router.get("/offers", async (req, res) => {
 // 6. Get All Categories
 router.get("/categories", async (req, res) => {
   try {
-    const categories = await Category.find({}).sort({ order: 1 });
+    const categories = await Category.find({isActive: true}).sort({ order: 1 });
     res.json(categories);
   } catch (error) {
     res.status(500).json({ message: error.message });

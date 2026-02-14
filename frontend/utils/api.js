@@ -59,8 +59,8 @@ const api = {
 
   // Booking Routes (Login Required - Token Auto-Attached)
   bookings: {
-    create: (data) => apiClient.post("/api/bookings", data),
-    getMyBookings: () => apiClient.get("/api/bookings/my-bookings"),
+    create: (data) => apiClient.post("/api/bookings/create", data),
+    getMyBookings: () => apiClient.get("/api/bookings"),
     cancel: (id) => apiClient.put(`/api/bookings/${id}/cancel`),
   },
 };

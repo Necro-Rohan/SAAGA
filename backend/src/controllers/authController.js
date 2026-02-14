@@ -3,11 +3,10 @@ import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { sendWhatsappOtp } from "../utils/WhatsApp.js";
-import { set } from "mongoose";
 
 // Generate Token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+const generateToken = (user) => {
+  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
 // Send OTP (Customer)
@@ -53,7 +52,7 @@ export const verifyOtp = async (req, res) => {
       await user.save();
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user);
 
     // Clean up OTP
     await Otp.deleteOne({ _id: validOtp._id });
@@ -101,7 +100,7 @@ export const portalLogin = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user);
 
     setTokenCookie(res, token);
     res.status(200).json({

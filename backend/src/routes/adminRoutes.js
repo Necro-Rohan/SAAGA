@@ -25,6 +25,7 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  deletePermanentCategory,
   promoteUser,
   demoteUser,
   searchImages,
@@ -88,6 +89,7 @@ router.get("/categories", getAllCategories);
 router.post("/categories", createCategory);
 router.patch("/categories/:id", updateCategory);
 router.delete("/categories/:id", deleteCategory);
+router.delete("/categories/:id/permanent", deletePermanentCategory); 
 
 //user role management
 router.post("/promote-user", promoteUser);

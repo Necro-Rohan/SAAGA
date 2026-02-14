@@ -53,7 +53,9 @@ const BookingsView = () => {
                   ? "bg-blue-100 text-blue-700"
                   : booking.status === "pending"
                   ? "bg-yellow-100 text-yellow-800"
-                  : "bg-red-100 text-red-700"
+                  : booking.status === "noshow" 
+                  ? "bg-gray-200 text-gray-700"
+                  : "bg-red-100 text-red-700" 
               }`}
             >
               {booking.status}
@@ -65,6 +67,7 @@ const BookingsView = () => {
             <div className="flex items-center text-gray-700">
               <User className="mr-2 h-4 w-4" />
               <span className="font-semibold">
+                {/* {console.log("Booking User:", booking.userId)} */}
                 {booking.userId?.name || booking.userId?.phone || "Unknown User"}
               </span>
             </div>
@@ -126,7 +129,7 @@ const BookingsView = () => {
         <div className="space-y-10">
           {sections.map((section) => {
             // Filter bookings for the current section
-            const sectionBookings = bookings.filter((b) => b.status === section.key);
+            const sectionBookings = bookings.filter((b) => b.status === section.key).sort((b, a) => new Date(b.date) - new Date(a.date)); 
 
             // Only render the section if there are bookings
             if (sectionBookings.length === 0) return null;
